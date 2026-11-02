@@ -10,7 +10,7 @@ ACTION="preflight"
 
 usage() {
   cat <<'EOF'
-Usage: ssc-demo-cluster.sh [--preflight|--ensure-storage|--bootstrap-gitops|--bootstrap-platform-argocd|--bootstrap-pipelines]
+Usage: ssc-demo-cluster.sh [--preflight|--ensure-storage|--bootstrap-gitops|--bootstrap-platform-argocd|--bootstrap-pipelines|--ensure-platform-argocd-admin|--ensure-keycloak-route|--ensure-rhtpa-router-ca|--ensure-rhtpa-server-ca|--ensure-rhtpa-hook-tls|--ensure-quay-noobaa-rbac]
 
 Actions:
   --preflight             Read-only cluster and SSC prerequisite checks (default)
@@ -18,6 +18,12 @@ Actions:
   --bootstrap-gitops      Apply the existing SSC GitOps operator bootstrap manifests
   --bootstrap-platform-argocd  Apply the SSC platform ArgoCD instance and RBAC
   --bootstrap-pipelines   Render/apply the existing SSC Pipelines operator chart
+  --ensure-platform-argocd-admin  Grant demo-only admin rights to the Argo controller
+  --ensure-keycloak-route  Create the SSC sso hostname alias for Keycloak
+  --ensure-rhtpa-router-ca Create the RHTPA namespace ingress-CA ConfigMap
+  --ensure-rhtpa-server-ca Mount the CA bundle into the RHTPA server
+  --ensure-rhtpa-hook-tls  Persist a dev-only TLS-compatible RHTPA hook override
+  --ensure-quay-noobaa-rbac Grant the SSC Quay hook read-only ODF status access
 
 Environment:
   SSC_DEMO_DIR             Path to an untouched ssc-demo checkout
@@ -26,7 +32,7 @@ EOF
 
 while (($#)); do
   case "$1" in
-    --preflight|--ensure-storage|--bootstrap-gitops|--bootstrap-platform-argocd|--bootstrap-pipelines)
+    --preflight|--ensure-storage|--bootstrap-gitops|--bootstrap-platform-argocd|--bootstrap-pipelines|--ensure-platform-argocd-admin|--ensure-keycloak-route|--ensure-rhtpa-router-ca|--ensure-rhtpa-server-ca|--ensure-rhtpa-hook-tls|--ensure-quay-noobaa-rbac)
       ACTION="$1"
       ;;
     -h|--help)
@@ -110,6 +116,10 @@ ensure_storage() {
 }
 
 bootstrap_gitops() {
+  if oc get subscription openshift-gitops-operator -n openshift-operators >/dev/null 2>&1; then
+    echo "GitOps subscription already exists; skipping bootstrap manifests"
+    return
+  fi
   require_file "$SSC_DEMO_DIR/bootstrap/platform-gitops/gitops-operator/namespace-openshift-gitops-operator.yaml"
   require_file "$SSC_DEMO_DIR/bootstrap/platform-gitops/gitops-operator/olm-gitops-operatorgroup.yaml"
   require_file "$SSC_DEMO_DIR/bootstrap/platform-gitops/gitops-operator/olm-gitops-subscription.yaml"
@@ -126,6 +136,10 @@ bootstrap_gitops() {
 }
 
 bootstrap_pipelines() {
+  if oc get subscription openshift-pipelines-operator -n openshift-operators >/dev/null 2>&1; then
+    echo "Pipelines subscription already exists; skipping bootstrap chart"
+    return
+  fi
   require_file "$SSC_DEMO_DIR/automation/gitops/components/pipelines/Chart.yaml"
   check_login
   command -v helm >/dev/null || { echo "helm is required for --bootstrap-pipelines" >&2; exit 1; }
@@ -138,6 +152,10 @@ bootstrap_pipelines() {
 }
 
 bootstrap_platform_argocd() {
+  if oc get argocd platform-gitops -n platform-gitops >/dev/null 2>&1; then
+    echo "platform-gitops ArgoCD already exists; skipping bootstrap manifests"
+    return
+  fi
   local dir="$SSC_DEMO_DIR/bootstrap/platform-gitops/gitops-platform-instance"
   require_file "$dir/namespace-platform-gitops.yaml"
   require_file "$dir/platform-gitops-argocd.yaml"
@@ -152,10 +170,123 @@ bootstrap_platform_argocd() {
   echo "SSC platform ArgoCD instance and RBAC applied. Component Applications were not applied."
 }
 
+ensure_quay_noobaa_rbac() {
+  check_login
+  oc apply -f - <<'EOF'
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ssc-quay-noobaa-reader
+  namespace: openshift-storage
+rules:
+- apiGroups: ["noobaa.io"]
+  resources: ["noobaas"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["noobaa.io"]
+  resources: ["backingstores"]
+  verbs: ["get", "list", "watch", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ssc-quay-noobaa-reader
+  namespace: openshift-storage
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ssc-quay-noobaa-reader
+subjects:
+- kind: ServiceAccount
+  name: quay-noobaa
+  namespace: quay-registry
+EOF
+  echo "SSC Quay NooBaa read-only RBAC applied."
+}
+
+ensure_platform_argocd_admin() {
+  check_login
+  oc create clusterrolebinding ssc-platform-gitops-application-admin \
+    --clusterrole=cluster-admin \
+    --serviceaccount=platform-gitops:platform-gitops-argocd-application-controller \
+    --dry-run=client -o yaml | oc apply -f -
+  echo "Demo-only cluster-admin binding applied to the platform Argo application controller."
+}
+
+ensure_keycloak_route() {
+  check_login
+  local domain
+  domain="$(oc get ingresses.config/cluster -o jsonpath='{.spec.domain}')"
+  oc apply -f - <<EOF
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: sso
+  namespace: keycloak
+  labels:
+    app.kubernetes.io/part-of: ssc-demo
+    app.kubernetes.io/component: keycloak-compatibility
+spec:
+  host: sso.${domain}
+  port:
+    targetPort: 8080
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: keycloak-service
+    weight: 100
+  wildcardPolicy: None
+EOF
+  echo "SSC Keycloak sso route applied"
+}
+
+ensure_rhtpa_router_ca() {
+  check_login
+  oc get namespace trusted-profile-analyzer >/dev/null
+  oc get secret router-ca -n openshift-ingress-operator -o jsonpath='{.data.tls\.crt}' | base64 -d \
+    | oc create configmap ssc-router-ca -n trusted-profile-analyzer \
+        --from-file=ca-bundle.crt=/dev/stdin --dry-run=client -o yaml | oc apply -f -
+  echo "RHTPA router CA ConfigMap applied"
+}
+
+ensure_rhtpa_server_ca() {
+  check_login
+  local app_patch
+  app_patch='{"spec":{"ignoreDifferences":[{"group":"apps","kind":"Deployment","name":"server","namespace":"trusted-profile-analyzer","jsonPointers":["/spec/template/spec/containers/0/env","/spec/template/spec/containers/0/volumeMounts","/spec/template/spec/volumes","/spec/strategy"]}]}}'
+  oc patch application ssc-rhtpa-operator -n platform-gitops --type=merge -p "$app_patch" >/dev/null
+  oc set env deployment/server -n trusted-profile-analyzer SSL_CERT_FILE=/etc/rhtpa-ca/ca-bundle.crt
+  oc set volume deployment/server -n trusted-profile-analyzer --add --name=rhtpa-extra-ca --type=configmap --configmap-name=rhtpa-extra-ca --mount-path=/etc/rhtpa-ca --read-only --overwrite
+  oc patch deployment server -n trusted-profile-analyzer --type=merge -p '{"spec":{"strategy":{"type":"RollingUpdate","rollingUpdate":{"maxSurge":0,"maxUnavailable":1}}}}' >/dev/null
+  oc rollout status deployment/server -n trusted-profile-analyzer --timeout=5m
+  echo "RHTPA server CA trust and low-resource rollout override applied"
+}
+
+ensure_rhtpa_hook_tls() {
+  check_login
+  oc patch application ssc-rhtpa-prerequisites -n platform-gitops --type=merge -p '{"spec":{"ignoreDifferences":[{"group":"batch","kind":"Job","name":"wait-for-keycloak","namespace":"trusted-profile-analyzer","jsonPointers":["/spec/template/spec/containers/0/command"]}]}}' >/dev/null
+  oc delete job wait-for-keycloak -n trusted-profile-analyzer --ignore-not-found=true
+  oc create job wait-for-keycloak -n trusted-profile-analyzer \
+    --image=registry.access.redhat.com/ubi9/ubi-minimal:latest \
+    -- /bin/sh -c 'curl -k -sf -o /dev/null https://sso.apps.ocp-edge94.qe.lab.redhat.com/realms/backstage/.well-known/openid-configuration'
+  oc annotate job wait-for-keycloak -n trusted-profile-analyzer \
+    argocd.argoproj.io/hook=PreSync \
+    argocd.argoproj.io/hook-delete-policy=BeforeHookCreation \
+    argocd.argoproj.io/sync-wave=0 >/dev/null
+  oc wait --for=condition=complete --timeout=120s job/wait-for-keycloak -n trusted-profile-analyzer
+  echo "Development-only RHTPA TLS hook override applied and completed"
+}
+
 case "$ACTION" in
   --preflight) preflight ;;
   --ensure-storage) ensure_storage ;;
   --bootstrap-gitops) bootstrap_gitops ;;
   --bootstrap-platform-argocd) bootstrap_platform_argocd ;;
   --bootstrap-pipelines) bootstrap_pipelines ;;
+  --ensure-platform-argocd-admin) ensure_platform_argocd_admin ;;
+  --ensure-keycloak-route) ensure_keycloak_route ;;
+  --ensure-rhtpa-router-ca) ensure_rhtpa_router_ca ;;
+  --ensure-rhtpa-server-ca) ensure_rhtpa_server_ca ;;
+  --ensure-rhtpa-hook-tls) ensure_rhtpa_hook_tls ;;
+  --ensure-quay-noobaa-rbac) ensure_quay_noobaa_rbac ;;
 esac

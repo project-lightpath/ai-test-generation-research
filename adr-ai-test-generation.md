@@ -73,7 +73,7 @@ Candidate sources include the ai-test-harness implementation \[R1\], fullsend-ai
 
 • License, ownership, maintenance, and migration status require verification.
 
-• Existing tools have narrower scope and documented historical failure modes addressed by safety checks, e.g., black-box/UI planning, Python/Go support, no sealed differential execution, weak/generated assertions, uncollectable candidates, or evidence that is not bound to the exact executed content \[R17\].
+• Existing tools have narrower scope and documented historical failure modes addressed by safety checks, e.g., black-box/UI planning, Python/Go support, no sealed differential execution, weak/generated assertions, uncollectable candidates, or evidence that is not bound to the exact executed content \[R18\].
 
 • Integration may be more complex than a clean implementation if lifecycle and evidence models differ.
 
@@ -119,9 +119,9 @@ Vulnerability Prioritization is the input driver targeted for the initial releas
 
 The Analyze stage also evaluates the target before generation. It discovers or consumes the service's test conventions, build and test commands, fixtures, deployment profile, existing coverage, dependency behavior, and available sandbox or dynamic-validation capabilities \[R7\]. It produces a feasibility assessment that determines which validation layers are safe and technically possible for this run: static analysis, library-level tests, application call-site tests, component environments, deployment-shaped simulation, or no automated execution. This assessment constrains the Plan stage; it does not silently turn an unavailable validation layer into a passing result.
 
-For a VEX/VPE-driven fix-validation request, feasibility confirms that authorized base and candidate subjects, reproducible builds, equivalent environments, and clear test pass/fail criteria are available for differential execution. It does not validate the fix. Execute and quality gates validate it by running the same test against both subjects: vulnerable behavior on base and fixed behavior on candidate. Missing artifacts, environment differences, collection failures, or unclear criteria produce a blocked or inconclusive result.
+For a Vulnerability Prioritization-driven fix-validation request, feasibility confirms that authorized base and candidate subjects, reproducible builds, equivalent environments, and clear test pass/fail criteria are available for differential execution. It does not validate the fix. Execute and quality gates validate it by running the same test against both subjects: vulnerable behavior on base and fixed behavior on candidate. Missing artifacts, environment differences, collection failures, or unclear criteria produce a blocked or inconclusive result \[R9\].
 
-The service will:
+### Proposed Service Capabilities
 
 • Preserve evidence, assessment, and recommendation as separate concepts.
 
@@ -135,11 +135,11 @@ The service will:
 
 • Distinguish test failures, setup failures, blocked runs, non-reproduction, and inconclusive evidence.
 
-• Produce test and runtime evidence tied to source, artifact, dependency, environment, model, prompt, and tool identities. Preserve and reference the authoritative VEX documents/statements supplied by Vulnerability Prioritization, and link generated-test and runtime evidence back to the applicable VEX artifacts. Evidence should use appropriate industry-standard evidence, provenance, attestation, and VEX-compatible formats where applicable; be attachable to the source-control change; publishable to an approved audit/evidence store; and consumable by automated release and policy gates.
+• Produce test and runtime evidence tied to source, artifact, dependency, environment, model, prompt, and tool identities. Preserve and reference the authoritative VEX documents/statements supplied by Vulnerability Prioritization, and link generated-test and runtime evidence back to the applicable VEX artifacts. Evidence should use appropriate industry-standard evidence, provenance, attestation formats, attachable to the source-control change, publishable to an approved audit/evidence store, and consumable by automated release and policy gates.
 
 • Run deterministic preflight self-verification and failure-register checks before consuming request-specific evidence or invoking model/repository work; fail closed and publish no downstream evidence when required checks fail.
 
-• When generated tests are promoted into a repository, deliver them only through a human-reviewed pull request or an explicitly approved equivalent workflow. Repository promotion is not required for the initial VPE-to-Test-Generation MVP.
+• Deliver tests only through a human-reviewed pull request or an explicitly approved equivalent workflow.
 
 • Avoid modifying production code, dependency manifests, release state, or authoritative Lightwell vulnerability records.
 
@@ -147,7 +147,7 @@ The service will:
 
 • Require quality gates to establish that generated tests exercise the prioritized vulnerability, code change, or other stated objective rather than merely compiling or passing. A merge decision will consider two things where either can prevent a merge: the pipeline result and the test evidence. The initial release may be a human-involved review, but the end-goal *is* synthesizing these gates with minimal input.
 
-• Measure the service by stage and end-to-end run. Capture latency, queue and human-wait time, model/token usage, infrastructure and execution cost, retries, artifact volume, failures, quality-gate outcomes, evidence completeness, reviewer effort, accepted tests, and avoided or detected issues. Establish a baseline using the existing manual/CI process and report gains, regressions, and limitations; business-case thresholds remain pilot hypotheses until measured.
+• Measure the service by stage and end-to-end run. Capture latency, wait times, token usage, infrastructure and execution cost, retries, artifact volume, failures, quality-gate outcomes, evidence completeness, reviewer effort, accepted tests, and avoided or detected issues. Establish a baseline using the existing manual/CI process and report gains, regressions, and limitations; business-case thresholds remain pilot hypotheses until measured.
 
 ### Provisional MVP Definition of Done and Roadmap
 
@@ -199,20 +199,21 @@ The following references identify the existing options considered by this ADR. L
 | R6 | [Evidence-Driven Vulnerability Impact Prioritization](https://docs.google.com/document/d/1xD6MkLutIbsmEeugL5J-7VumQGOR3weXwe_CsLik0Wo/edit?usp=sharing)  | Related Blueprint ADR | Upstream vulnerability applicability, reachability, path-witness, and limitation evidence |
 | R7 | [test-generation.md\#phase-a-discover](https://github.com/testetson22/ai-test-generation/blob/main/test-generation.md#phase-a-discover) | Proposed Analyze-stage repository discovery process. | Repository profiles, native framework selection, test-context discovery, fixtures, CI, and safety constraints. |
 | R8 | [ai-test-generation-research.md\#d-make-stage-checkpoints-first-class-controller-objects](https://github.com/testetson22/ai-test-generation/blob/main/ai-test-generation-research.md#d-make-stage-checkpoints-first-class-controller-objects)  | Proposed durable checkpoint/state-transition model. | Future feedback, pause/resume, retry routing, and Lightwell orchestration design. |
+| R9 | [vulnerability-driven-structure.md\#additional-system-context-and-feasibility-assessment](https://github.com/testetson22/ai-test-generation/blob/main/vulnerability-driven-structure.md#additional-system-context-and-feasibility-assessment)  | Context around the relationship between vulnerability assessments and test generation | Provide a deeper dive into architectural decision at the vulnerability prioritization integration point |
 
 ### Candidate third-party and open-source components
 
 | Ref | Resource | Potential use | Verification required |
 | :---- | :---- | :---- | :---- |
-| R9 | Python, uv, pytest, pytest-cov, PyYAML | Runtime, dependency management, test execution, parsing | Version, license, ecosystem fit |
-| R10 | Playwright | Browser/UI execution and verification | Sandbox, cluster access, data isolation |
-| R11 | Ruff, flake8, RedHatQE flake8 plugins, pre-commit, markdownlint | Deterministic linting and repository quality checks | License, support, integration boundaries |
-| R12 | Jira REST API and GitHub CLI | Strategy intake, issue context, PR publication and feedback | Credentials, tenant policy, platform abstraction |
-| R13 | Semgrep/Opengrep and language-server/compiler tooling | Static reachability, symbol mapping, taint and evidence generation | Precision, recall, language coverage, licensing |
-| R14 | Mutation and fuzzing tools | Test-strength and negative-behavior validation | Ecosystem support, execution limits, reproducibility |
-| R15 | OpenAEV, Metasploit, and related validation tools | Future authorized active-exploitation validation | Authorization, isolation, payload controls, audit, license |
-| R16 | in-toto, SLSA, signing and attestation tooling | Test provenance and evidence verification | Lightwell evidence integration and policy support |
-| R17 | [tool-reliability-findings.md](https://github.com/testetson22/ai-test-generation/blob/main/tool-reliability-findings.md) | Observed and reported limitations in existing test-generation work | Reliability envelope, self-check, and evidence-gate requirements |
+| R10 | Python, uv, pytest, pytest-cov, PyYAML | Runtime, dependency management, test execution, parsing | Version, license, ecosystem fit |
+| R11 | Playwright | Browser/UI execution and verification | Sandbox, cluster access, data isolation |
+| R12 | Ruff, flake8, RedHatQE flake8 plugins, pre-commit, markdownlint | Deterministic linting and repository quality checks | License, support, integration boundaries |
+| R13 | Jira REST API and GitHub CLI | Strategy intake, issue context, PR publication and feedback | Credentials, tenant policy, platform abstraction |
+| R14 | Semgrep/Opengrep and language-server/compiler tooling | Static reachability, symbol mapping, taint and evidence generation | Precision, recall, language coverage, licensing |
+| R15 | Mutation and fuzzing tools | Test-strength and negative-behavior validation | Ecosystem support, execution limits, reproducibility |
+| R16 | OpenAEV, Metasploit, and related validation tools | Future authorized active-exploitation validation | Authorization, isolation, payload controls, audit, license |
+| R17 | in-toto, SLSA, signing and attestation tooling | Test provenance and evidence verification | Lightwell evidence integration and policy support |
+| R18 | [tool-reliability-findings.md](https://github.com/testetson22/ai-test-generation/blob/main/tool-reliability-findings.md) | Observed and reported limitations in existing test-generation work | Reliability envelope, self-check, and evidence-gate requirements |
 
 The detailed landscape, evidence levels, and reuse questions are maintained in existing-work-landscape.md and ai-test-generation-research.md.
 
@@ -238,7 +239,7 @@ The detailed landscape, evidence levels, and reuse questions are maintained in e
 
 ### Cons
 
-• The initial design must coordinate multiple evidence owners and integration boundaries, including VPE, Lightwell/platform, execution, artifact, signing, and policy consumers; explicit ownership and extensible contracts are therefore required from the MVP. SCM becomes an additional boundary when repository publication is enabled.
+• The initial design will not need to coordinate multiple evidence owners and integration boundaries; however, in the future we may need to handle multiple owners and extensibility needs to be part of the design.
 
 • Contract-based Lightwell integration requires requests, checkpoints, evidence references, results, and review decisions.
 

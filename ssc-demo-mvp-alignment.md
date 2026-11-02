@@ -6,7 +6,9 @@ Date: Oct 30, 2026
 
 This document aligns the AI Test Generation MVP with `/Users/tstetson/Public/workspaces/ssc-demo`. It is a planning and discovery artifact, not a new architecture decision and not a commitment to the demo's current agent implementation.
 
-The objective is a VPE-initiated Java/VEX test-generation run that fits the existing supply-chain demonstration and can replace the current limited test-generation implementation without replacing the surrounding platform flow. SCM is considered only to the extent the existing demo requires it to supply source or expose generated tests/evidence; broader SCM integration is not an MVP goal.
+The objective is to use the current SSC demo as a temporary development harness while building a VPE-initiated Java 21/Quarkus test-generation flow for the A&P-selected authoritative fixture. The eventual integration target is a separately delivered final demo configuration modeled on this harness. Generated tests are delivered through a human-reviewed pull request or explicitly approved equivalent only when required by that final configuration; provider-specific SCM triggering and publication are not design inputs from this development harness.
+
+The existing `ssc-demo` repository is a reusable implementation baseline, not a binding architecture. The MVP may fork and genericize its pipelines, tasks, GitOps resources, and integration patterns when that is more efficient than rebuilding them. The fork and the AI Test Generation repository should move to appropriate organizational projects with recorded ownership, license, source revision, divergence, synchronization, and rollback policies.
 
 ## Current Demo Baseline
 
@@ -59,7 +61,7 @@ VPE VEX/policy event or approved platform request
 6. Add differential execution and evidence publication before claiming fix validation. The current one-tree `mvn verify` step is not sufficient.
 7. Treat the integrated `maven-build-ci` AI branch as incompatible with vulnerability-driven fix-pinning until its DAG is redesigned: it generates generic tests before CVE selection and never runs a selected-vulnerability test against a known-bad/known-good pair.
 
-This approach allows the demo to show the new service in the existing test-generation position while leaving the high-level Analyze -> Plan -> Code -> Execute design intact.
+This approach allows the development harness to reduce redundant integration work while leaving the high-level Analyze -> Plan -> Code -> Execute design and the Java 21/Quarkus target intact. Findings caused only by this harness's Spring Boot, GitLab, TLS, storage, or task-layout choices must not become service architecture decisions.
 
 ## Compatibility Contract
 
@@ -148,7 +150,7 @@ The demo can initially use a manually created Tekton `PipelineRun` or platform r
 | Gap | Current demo behavior | MVP planning response |
 |---|---|---|
 | VPE trigger | RHTPA/Conforma and issue/comment flows; no explicit VPE service contract | Define a fixture and adapter contract before choosing webhook/event transport |
-| VEX input | Active path uses OSV+CycloneDX and RHTPA status suppression; OpenVEX exists only in an inactive legacy component | Add a source-preserved VPE/VEX fixture to the active path and pass immutable document/statement references into the service |
+| VEX input | Active path uses OSV+CycloneDX and RHTPA status suppression; OpenVEX exists only in an inactive legacy component | Add the source-preserved VPE/VEX finding and immutable document/statement references to the active path. Use synthetic fixtures only for contract/development tests while confirming the VPE delivery format and authentication through AP-S3 coordination |
 | Fix comparison | Current test generation validates one tree with `mvn verify` | Add explicit base/candidate subjects and differential execution |
 | Self-verification | Current task has bounded generation retries, not service preflight/failure-register checks | Add stage-zero preflight to the service adapter flow |
 | Credential isolation | Current task combines model credentials, repository edits, and Maven execution | Separate controller/model, repository execution, and SCM publication pods/service accounts/Secrets |
@@ -176,6 +178,7 @@ The spike should compare the current Task-based adapter with a direct service/Pi
 - How are VPE VEX/policy documents retrieved, authenticated, versioned, and preserved?
 - How are base and candidate revisions/artifacts made available and kept equivalent for Java/Maven execution?
 - Which signed evidence format and audit-store interface can the demo consume?
+- Which A&P spike outcomes (AP-S1 rules engine, AP-S2 pipeline responsibility split, AP-S3 VEX format) constrain this integration, and where can findings be shared rather than duplicated?
 - How are asynchronous service callbacks, PipelineRun status, retries, cancellation, and cleanup mapped?
 - What additional Task results or CRDs are needed without making Tekton results the long-term evidence store?
 - Which baseline metrics demonstrate improvement over the current task: latency, model cost, retry rate, test acceptance, review time, evidence completeness, and differential correctness?

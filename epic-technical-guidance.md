@@ -1,19 +1,44 @@
 # Epic Technical Guidance
 
-Date: Oct 30, 2026
+Date: Oct 30, 2026; revised Nov 2, 2026
 
 ## Purpose
 
-This document translates the proposed AI Test Generation ADR into technical guidance for upcoming Epics. It identifies work that can begin before a formal implementation research spike, proposes contracts that preserve optionality, and narrows the harness candidates that the spike should evaluate.
+This document translates the current AI Test Generation ADR into technical guidance for upcoming Epics. It identifies work that can begin before a formal implementation research spike, proposes contracts that preserve optionality, and narrows the harness candidates that the spike should evaluate.
+
+This revision aligns the AI Test Generation Epic and story structure with the core pipeline Epic used by the Vulnerability Assessment and Prioritization work in FlightPath (Jira label `lightwell`), so the two workstreams can be planned, sequenced, and reviewed together. Overlapping items are recorded in an overlap register for team discussion rather than resolved here.
 
 This is implementation guidance, not an additional ADR. Recommendations about specific frameworks remain provisional until the spike verifies licensing, operational fit, maintenance, security, and Lightwell integration constraints.
 
+## Epic-Readiness Assessment
+
+Where the documentation stands for Epic creation:
+
+Ready for Epic drafting:
+
+- ADR-direction invariants, provisional MVP assumptions, and spike-dependent decisions are separated (see Planning Authority and Architectural Starting Point).
+- Phase contracts, the canonical status hierarchy, adapter interfaces, and the differential evidence/sign-off record are sketched at contract level.
+- The development harness, final-demo integration seam, smoke-versus-conformant modes, and demo-specific operational contract are documented.
+- A capability-sequenced decomposition (previously Epic 0-9), cross-epic acceptance guidance, and a vertical-slice research spike shape exist.
+
+Resolved by this revision:
+
+- The decomposition now mirrors the Assessment & Prioritization structure at the outcome level while recommending one Jira Epic for the cohesive AI Test Generation capability. VI/TF/TG are ATG story groupings; Demo Environment and Release are shared A&P/platform dependencies with proposed updates to existing Epics, not duplicate ATG workstreams. See Recommended Epic Decomposition.
+- Final-demo composition is a separate proposed cross-workstream Epic, not an ATG implementation Epic or a task hidden under the current development-harness compatibility work. See `jira-drafts/ai-test-generation-final-demo-integration-epic.md`.
+
+Still open before Epic approval:
+
+- The pre-Epic alignment gate items: exact pilot repository/revisions, active VPE/VEX delivery contract, base/candidate source, final demo deployment location, RHOAI availability, evidence ownership/sign-off path, and minimum compatibility behavior required by the final demo configuration.
+- Decision-ledger reconciliation: mark confirmed entries and split partially resolved ones so open sub-decisions remain visible.
+- Assessment & Prioritization dependency confirmations recorded in the overlap register: VEX format and export timing (AP-S3), policy decision schema (AP-S1), execution responsibility split (AP-S2), Java fixture choice, and demo environment sharing.
+- Implementation-research spike results for the spike-dependent decisions listed in Decisions the Spike Must Inform.
+
 ## Planning Authority and Architectural Starting Point
 
-The ADR remains Proposed and the decision ledger still contains open items. For Epic drafting, distinguish:
+The ADR establishes the current architectural direction while the decision ledger retains implementation and ownership questions. For Epic drafting, distinguish:
 
-- **ADR-direction invariants:** constraints already stated by the proposed ADR and used to keep contracts coherent.
-- **Provisional MVP assumptions:** SSC demo, Java/Maven/JUnit, Tekton execution compatibility, human review, and VPE/VEX fixtures; these require confirmation or spike evidence.
+- **ADR-direction invariants:** constraints established by the current ADR and used to keep contracts coherent.
+- **MVP planning assumptions:** Java 21/Quarkus using the A&P-selected authoritative fixture, human review, a VPE-provided VEX finding, and integration with the final demo configuration; the current `ssc-demo` is only a temporary development harness.
 - **Spike-dependent decisions:** implementation frameworks, deployment topology, execution ownership, evidence store/signing system, and long-term publication/automation ownership.
 
 The following are ADR-direction invariants for planning, not a claim that every supporting decision is approved:
@@ -25,6 +50,8 @@ The following are ADR-direction invariants for planning, not a claim that every 
 - Generated tests use the repository's native framework.
 - Repository content, external descriptions, and generated code are untrusted inputs.
 - Test execution occurs outside the controller on approved ephemeral workers.
+- Components should be independently testable where the boundary is meaningful, using explicit contracts without requiring the full cluster, model endpoint, SCM system, or execution provider.
+- Use contract-driven mocks, simulators, deterministic fakes, replay fixtures, or local containers where appropriate; integration tests separately prove real adapter and platform behavior.
 - The service produces tests and evidence. It does not modify production code, merge changes, publish releases, or rewrite upstream vulnerability records.
 - Blocked, inconclusive, not-reached, and stated-gap outcomes are successful workflow outcomes when they accurately represent the evidence.
 
@@ -40,15 +67,15 @@ The updated AI Test Harness Blueprint Business Case adds implementation directio
 | Trusted Software Supply Chain is named as a landing BU for the evidence chain | Preferred evidence/signing integration direction, not final record ownership | Keep `EvidencePublisher`, artifact, signing, and release-gate contracts explicit |
 | The harness runs where the customer's pipeline runs | Portability direction; MVP provider ownership remains spike-dependent | Use an approved `ExecutionProvider`; evaluate the SSC Tekton environment first |
 | The initial path is human-reviewed | Provisional MVP operating assumption | Use event-driven checkpoints; do not hold execution workers while waiting for approval |
-| The existing SSC flow may use SCM to expose generated tests | Conditional compatibility boundary, not an independent MVP capability | Implement only the minimum adapter behavior required to preserve the current flow; keep broader triggering/publication provider-neutral and optional |
+| The existing SSC flow may use SCM to expose generated tests | Conditional compatibility boundary, not an independent provider-integration Epic | Deliver promoted tests through a human-reviewed PR or approved equivalent; keep provider-specific triggering/publication minimal and provider-neutral |
 | Candidates run on both sides of a change | Required where a valid base/candidate pair exists | Treat base/candidate identity and differential execution as first-class contracts, not optional narrative |
-| Signed records are verified by a policy/evidence consumer | Target evidence outcome; signer, store, and consumer remain open | Define the evidence kernel and selectable signing/publication interfaces before naming an authoritative store or release gate |
+| Evidence is reviewed and signed off by the responsible owner | Target governance outcome; owner, store, and consumer remain open | Define evidence ownership, review/sign-off roles, approval state, and selectable publication interfaces; cryptographic attestation is optional infrastructure |
 | Every reached behavior is validated, handed off, or a stated gap | Established completeness rule | Require a coverage/disposition map in Plan and final evidence |
 | Failure-register entries run at the start of every release/reference job | Harness release requirement | Start failure-register and golden-reference work with the first Epic, not after implementation |
 | Risk controls model budget and average inference targets | Pilot hypothesis, not yet a hard architectural gate | Capture risk/budget inputs and measurements; baseline before enforcing the 15-second and $0.05 targets |
 | First-party PRs become unattended in a later phase | Future operating mode | Keep unattended operation out of the initial Epic acceptance criteria; require a later policy decision |
-| The Blueprint names VEX drafts in a later milestone; the current integration assumption is that Vulnerability Prioritization emits and owns VEX | Treat VEX as authoritative upstream input and return linked test evidence | Do not make VEX publication an AI Test Generation Epic; implement the emitted format/version in the vulnerability input adapter |
-| VPE MVP focuses on Java and emits VEX | Treat Java as the first native adapter target and VPE VEX as the required vulnerability input | Implement the VPE-emitted VEX format/version and Java repository/build/test conventions first; keep other languages and VEX formats behind adapters |
+| The Blueprint names VEX drafts in a later milestone; the ADR requires Vulnerability Prioritization evidence as the initial input | Treat the VPE-provided VEX finding as authoritative upstream input and return linked test evidence | Do not make VEX publication an AI Test Generation Epic; implement the upstream format/version in the vulnerability input adapter |
+| VPE MVP focuses on Java and supplies the initial vulnerability finding | Treat Java as the first native adapter target and the VPE VEX finding as the required MVP input | Implement the VPE-provided VEX format/version and Java repository/build/test conventions first; keep other languages and formats behind adapters |
 | Vulnerability Prioritization may supply OPA/Rego policy decisions or bundles | Treat evaluated decisions as preferred upstream policy input; execute bundles only for run-specific facts VPE cannot evaluate | Add policy identity, schema, obligation, composition, and provenance contracts without making Rego part of model reasoning |
 
 ### Planning conflicts to resolve
@@ -58,13 +85,14 @@ The current planning sources are not fully aligned:
 - The Blueprint Business Case describes broader Python/Go pilots; current VPE MVP planning narrows the first implementation focus to Java.
 - The AI Test Generation ADR prioritizes vulnerability evidence as the initial driver; general first-party pull requests remain expansion scope.
 - The Blueprint describes a platform-agnostic harness, while also naming RHOAI as the model-serving and agent-runtime landing BU.
-- The Secure Software Supply Chain flow contains existing PR/MR paths, but the VPE-to-Test-Generation MVP need not publish a repository change.
+- The Secure Software Supply Chain flow contains existing PR/MR paths; the MVP requires human-reviewed test delivery but does not require broad provider-specific SCM automation.
 
 The Java/VEX MVP position resolves the initial trigger and removes SCM publication from the critical path. Confirm:
 
 1. The first Java repository, build system, test framework, and exact VEX format/version emitted by VPE.
 2. The VPE request transport/authentication and how immutable base/candidate subjects are supplied to the SSC demo.
 3. Whether RHOAI is a required deployment target for the pilot or the preferred production landing area after a portable local spike.
+4. VEX delivery details: confirm the VPE-provided VEX format/version, retrieval and authentication contract, and how the A&P output is linked to the initial AI Test Generation request. Synthetic VEX fixtures may support contract and development tests, but do not replace the ADR’s VPE-provided MVP input.
 
 ### Recommended MVP slice
 
@@ -77,10 +105,10 @@ VPE VEX output for a Java vulnerability
   -> evidence-backed native regression/fix-pinning test
   -> execution through the approved SSC Tekton provider or equivalent isolated provider
   -> base/candidate differential result
-  -> signed review evidence published through the configured SSC demo evidence path
+  -> owner-reviewed evidence published through the final demo evidence path
 ```
 
-This slice exercises the prioritized vulnerability driver, differential requirement, evidence chain, agent runtime, and SSC execution environment. SCM/PR behavior is included only when the current demo requires it to carry or display the generated test/evidence; it is not a separate MVP objective.
+This slice exercises the prioritized vulnerability driver, differential requirement, evidence chain, agent runtime, and SSC execution environment. A version-pinned synthetic VEX fixture may be used for contract and development tests, but the MVP end-to-end path uses the VPE-provided VEX finding required by the ADR. Generated tests are delivered through a human-reviewed pull request or explicitly approved equivalent; provider-specific SCM triggering and publication adapters remain conditional.
 
 Where the Blueprint Business Case describes resolving dependencies, looking up advisories, and scoring risk, the Epic plan should preserve the ADR boundary: Vulnerability Prioritization or another authoritative source supplies applicability and reachability evidence. AI Test Generation may apply a test-depth or model-budget policy to that evidence, but should not create a second vulnerability scanner or authoritative risk score.
 
@@ -154,10 +182,10 @@ Normalization must not be lossy without an explicit finding. The original conten
 
 ### Epic impact
 
-- **Epic 1:** Define `NormalizedVexInput`, source/statement identity, and `VexInputAdapter` interface.
-- **Epic 2:** Implement the format/version emitted by Vulnerability Prioritization and preserve the original VEX document as upstream evidence.
-- **Epic 7:** Add status-to-planning and identity-mapping tests, including protection against turning non-reproduction into `not_affected`.
-- **Epic 8:** Return signed test evidence linked to the original VEX statement so the owning workflow can decide whether a later VEX update is warranted.
+- **TG-1 (Pipeline contracts):** Define `NormalizedVexInput`, source/statement identity, and `VexInputAdapter` interface.
+- **VI-2 (VEX & Policy Input):** Implement the format/version emitted by Vulnerability Prioritization and preserve the original VEX document as upstream evidence.
+- **TG-7 (Pipeline gates):** Add status-to-planning and identity-mapping tests, including protection against turning non-reproduction into `not_affected`.
+- **REL-1 (Release evidence):** Return signed test evidence linked to the original VEX statement so the owning workflow can decide whether a later VEX update is warranted.
 
 The format-selection decision belongs to Vulnerability Prioritization and its authoritative evidence consumers. The AI Test Generation spike should implement the actual upstream format, plus fixtures proving unsupported formats and versions fail explicitly.
 
@@ -272,26 +300,26 @@ The deployment choice remains open: remote VPE decision API, dedicated OPA servi
 
 ### Epic impact
 
-- **Epic 1:** Define evaluated policy decision reference, typed obligation, and local composition-result contracts.
-- **Epic 2:** Implement VPE evaluated-decision ingestion. Bundle evaluation is excluded unless an identified run-specific policy use case is approved.
-- **Epic 3/4:** Map recognized obligations to feasibility and test-plan constraints with unknown-obligation rejection.
-- **Epic 7:** Add decision schema, unknown-obligation, expired/indeterminate result, conflict, and deny-overrides test fixtures. Signed-bundle tests apply only if the optional extension is selected.
-- **Epic 8:** Include policy decisions and evaluation provenance in signed review evidence.
+- **TG-1 (Pipeline contracts):** Define evaluated policy decision reference, typed obligation, and local composition-result contracts.
+- **VI-3 (VEX & Policy Input):** Implement VPE evaluated-decision ingestion. Bundle evaluation is excluded unless an identified run-specific policy use case is approved.
+- **TG-3/TG-4 (Pipeline analyze/plan):** Map recognized obligations to feasibility and test-plan constraints with unknown-obligation rejection.
+- **TG-7 (Pipeline gates):** Add decision schema, unknown-obligation, expired/indeterminate result, conflict, and deny-overrides test fixtures. Signed-bundle tests apply only if the optional extension is selected.
+- **REL-1 (Release evidence):** Include policy decisions and evaluation provenance in signed review evidence.
 
 The spike should use a fixed VPE decision fixture first. A second spike case should execute a signed bundle only if stakeholders identify a policy that genuinely requires AI Test Generation facts unavailable to VPE.
 
-## Signed Differential Evidence Record
+## Differential Evidence and Sign-Off Record
 
-The service should produce one signed record that binds the approved test, both sides of the change, both execution environments, the observed comparison, and all supporting artifact digests. This is the machine-verifiable form of “the tests and their results on both sides of the change.”
+The service should produce one reviewed evidence record that binds the approved test, both sides of the change, both execution environments, the observed comparison, and all supporting artifact digests. This is the machine-verifiable form of “the tests and their results on both sides of the change.” An authorized owner signs off on the evidence and limitations; cryptographic signing/attestation may protect the record when the selected evidence platform requires it, but it is not the meaning of sign-off.
 
 The record should support multiple publication paths without creating separate truths:
 
 - Attach a concise human-readable summary and machine-readable evidence link/check to the pull or merge request.
-- Publish the signed attestation and evidence manifest through the configured evidence publisher/store.
+- Publish the reviewed evidence record and evidence manifest through the configured evidence publisher/store.
 - Expose a stable machine-readable status/result API for configured policy/evidence consumers, CI systems, and later VEX workflows.
 - Retain the full artifacts in content-addressed storage and reference them from both the PR and audit record.
 
-The PR is a discoverable review surface, not a durable evidence store. The immutable service-produced record and verified artifact manifest preserve the evidence; the configured consumer's policy determines authority.
+The PR is a discoverable review surface, not a durable evidence store. The immutable service-produced record and verified artifact manifest preserve the evidence; the configured owner/consumer policy determines authority and sign-off.
 
 ### Provisional contract
 
@@ -353,7 +381,14 @@ SignedDifferentialTestRecord
     policy_evaluation_refs[]
     artifact_manifest_digest
 
-  attestation
+  review_and_signoff
+    owner_ref
+    decision: approved | rejected | superseded | pending
+    decision_ref
+    decided_at
+    limitations_acknowledged
+
+  optional_integrity_attestation
     statement_ref
     envelope_ref
     signer_identity
@@ -388,15 +423,15 @@ The signing process should:
 4. Store or reference certificate, transparency, or enterprise verification material.
 5. Produce a separately recorded `AttestationVerificationResult` consumed by the release/review gate.
 
-Signing establishes origin and tamper evidence. It does not establish that the expected behavior/pass-fail criteria were correct, the environment represented production, or the vulnerability is exploitable. Those claims remain limited by the signed comparison and its cited evidence.
+Owner sign-off establishes review accountability and acceptance of the stated limitations. Optional cryptographic attestation establishes origin and tamper evidence; neither establishes that the expected behavior/pass-fail criteria were correct, the environment represented production, or the vulnerability is exploitable.
 
 ### Epic impact
 
-- **Epic 1:** Define `SignedDifferentialTestRecord`, subject, materialized-test equivalence, supersession, and attestation-verification contracts.
-- **Epic 5:** Emit the approved plan and exact generated patch identities required by both executions.
-- **Epic 6:** Produce separate base/candidate execution records and deterministic environment/test-equivalence manifests.
-- **Epic 7:** Generate the comparison classification and reject unsupported strict-differential claims.
-- **Epic 8:** Assemble, sign, verify, publish, and attach the record to the PR/release evidence chain.
+- **TG-1 (Pipeline contracts):** Define `DifferentialEvidenceRecord`, subject, materialized-test equivalence, supersession, owner sign-off, and optional attestation-verification contracts.
+- **TG-5 (Pipeline code):** Emit the approved plan and exact generated patch identities required by both executions.
+- **TG-6 (Pipeline execute):** Produce separate base/candidate execution records and deterministic environment/test-equivalence manifests.
+- **TG-7 (Pipeline gates):** Generate the comparison classification and reject unsupported strict-differential claims.
+- **REL-1 (Release evidence):** Assemble, obtain owner sign-off, verify, publish, and attach the record to the final demo/release evidence chain; add cryptographic attestation only if required by the selected consumer.
 
 ## Recommended Harness Strategy
 
@@ -932,7 +967,7 @@ A pipeline phase should not automatically become a separately deployed service. 
 | AI Test Generation -> source provider | Read immutable revision/artifact for MVP; optional SCM mutation later | source snapshot reference; expansion `PublicationIntent`/result |
 | Controller -> execution environment | Asynchronous job and callback/event | `ExecutionRequest`, execution status event, `ExecutionResult` |
 | All phases -> artifact store | Content-addressed write/read/verify | `ArtifactReference`, digest, metadata, retention classification |
-| AI Test Generation -> Lightwell evidence/review workflow | Publish signed differential evidence, evidence manifest, and review state | `SignedDifferentialTestRecord`, `EvidenceManifest`, `ReviewPacket`, publication result |
+| AI Test Generation -> Lightwell evidence/review workflow | Publish reviewed differential evidence, evidence manifest, owner sign-off, and review state | `DifferentialEvidenceRecord`, `EvidenceManifest`, `ReviewPacket`, publication result |
 
 Repository analysis, feasibility, planning, generation, and quality evaluation can initially be internal modules with versioned typed objects. They should be split into network services only when scaling, security isolation, ownership, or deployment cadence requires it.
 
@@ -1486,7 +1521,7 @@ Keep the service-owned predicate format-neutral at the domain level, then render
 - JUnit, coverage, mutation, and SARIF artifacts for existing CI/developer tooling, referenced rather than embedded in the attestation.
 - VEX remains an upstream VPE input and is not replaced by this record; test evidence may be linked back to its VEX statement.
 
-The initial Epic should identify the authoritative audit-store schema and release-gate ingestion contract before selecting a final envelope. Format conversion must record the source predicate digest and any fields not representable in the target format.
+REL-1 should identify the authoritative audit-store schema and release-gate ingestion contract before selecting a final envelope. Format conversion must record the source predicate digest and any fields not representable in the target format.
 
 ## Adapter Interfaces
 
@@ -1555,17 +1590,33 @@ Adapters should declare capabilities rather than force callers to infer them. Fo
 
 ## SSC Demo MVP Constraints
 
-The SSC demo is the MVP host and compatibility target, not the source of the service architecture. Its current test-generation slot is useful for baseline measurement and adapter smoke testing, but replacing only `ai-generate-tests` does not produce a conformant MVP.
+The current SSC demo is a temporary development harness and integration baseline, not a set of immutable rules, the authoritative Java target, or the source of the service architecture. Its implementation is useful for baseline measurement, adapter smoke testing, and reusable deployment/integration patterns while the final demo configuration is being delivered. The final integration target will be modeled on this harness but is a separate dependency; replacing only `ai-generate-tests` does not produce a conformant MVP.
+
+### SSC demo reuse and fork strategy
+
+Evaluate the existing SSC demo as implementation source material and a potential fork:
+
+- Reuse proven Argo, Tekton, GitOps, GitLab/SCM, model-endpoint, artifact, and operator patterns where they reduce MVP work.
+- Preserve the current demo as a baseline and rollback reference; do not treat its task parameters, linear workflow, credential placement, one-tree execution, or current result fields as authoritative ATG contracts.
+- Fork and genericize the relevant demo repository/components when direct modification is the fastest path to the MVP. The fork should expose provider-neutral service interfaces and replace demo-specific names, credentials, routes, assumptions, and hard-coded repository behavior.
+- Move the forked repository to an appropriate organizational project, and place the AI Test Generation implementation in its appropriate project, before treating either repository as a long-term product source.
+- Record the fork source revision, license/ownership terms, retained components, removed assumptions, divergence policy, upstream synchronization policy, and repository owners.
+- Keep the forked demo and AI Test Generation service independently versioned while preserving a tested integration path and rollback to the captured baseline.
+
+The fork decision is an implementation and ownership choice, not an ADR invariant. A clean implementation remains acceptable if it provides stronger evidence, security isolation, maintainability, or portability than adapting the demo.
 
 | Demo fact | Planning consequence |
 |---|---|
 | `agentic-test-generation` runs `clone -> package -> ai-generate-tests -> mvn verify -> PR/MR` | An adapter inserted at `ai-generate-tests` is smoke compatibility mode because repository access and Maven execution already occurred before service preflight |
-| The active GitOps path loads OSV advisories and CycloneDX documents into RHTPA | Add an explicit, version-pinned VPE/VEX fixture to the active path; the OpenVEX file under the inactive legacy Nexus component is reference data, not an active upstream contract |
+| The SSC Spring Boot FSI demo is Java 17/Spring Boot 2.7.18 with Maven, 121 tests, 95.1% line coverage, and 78.1% branch coverage | Use it as compatibility/demo baseline material only; it does not override the Java 21/Quarkus ATG target or A&P fixture decision |
+| `apply-rhlw-version.sh` and `revert-rhlw-version.sh` change dependency coordinates without application-code changes | If the SSC demo is selected as an additional target, treat upstream and remediated dependency states as candidate base/candidate subjects after creating immutable identities and confirming the intended differential relationship |
+| The active GitOps path loads OSV advisories and CycloneDX documents into RHTPA | Add the source-preserved VPE/VEX finding to the ATG integration path; synthetic fixtures may support contract tests, while the OpenVEX file under the inactive legacy Nexus component remains reference data only |
 | RHTPA reconstructs fixed/not-affected status for suppression | Treat suppression output as supporting evidence, not as source-preserved `NormalizedVexInput` |
 | The current task has one mutable checkout and one candidate-side `mvn verify` | MVP differential execution requires immutable base/candidate subjects, two independent executions, and deterministic comparison |
 | The current agent container receives model credentials, edits source, and executes Maven | Separate the model/controller and untrusted repository execution identities, pods, and credentials before MVP acceptance; optional SCM publication remains separately isolated |
 | The current PipelineRun is linear and opens a PR immediately | Human Analyze/Plan review requires event-driven continuation; no pod waits for approval |
 | Current results are `TESTS_ADDED`, Maven status, and `PR_URL` | Preserve these only as compatibility outputs; canonical results are bounded references to durable artifacts, checkpoints, execution records, and signed evidence |
+| Existing demo repositories and manifests are available to fork | Use them as baseline implementation material, then genericize and relocate the fork with recorded ownership, licensing, divergence, and rollback policy |
 | Tekton resources are plain YAML reconciled by Argo self-heal | Demo integration changes require a GitOps source/branch and rollback plan; `oc edit` is not an implementation path |
 | The current AI ConfigMap is one global endpoint profile and can disable TLS verification | Treat it as baseline-only; shared MVP environments require an approved endpoint profile, TLS verification, capability conformance, and provenance identity |
 
@@ -1573,7 +1624,7 @@ The SSC demo is the MVP host and compatibility target, not the source of the ser
 
 **Smoke compatibility mode** replaces or wraps the current `ai-generate-tests` Task, returns `TESTS_ADDED`, materializes a test patch into the existing workspace, and preserves the current `mvn verify`/PR steps. It validates connectivity and contract translation only. It must not claim stage-zero protection, human checkpoint durability, credential isolation, or differential fix validation.
 
-**Conformant MVP mode** moves request acceptance and required preflight before repository clone/build; uses source-preserved VPE/VEX input; resolves immutable base/candidate subjects; separates controller and execution credentials; pauses without allocated compute; runs the exact approved test independently on both subjects; persists artifacts before PipelineRun/PVC cleanup; and publishes verified signed evidence. Optional SCM publication remains separately isolated.
+**Conformant MVP mode** moves request acceptance and required preflight before repository clone/build; uses source-preserved VPE/VEX input; resolves the A&P-selected Java 21/Quarkus immutable base/candidate subjects; separates controller and execution credentials; pauses without allocated compute; runs the exact approved test independently on both subjects; persists artifacts before PipelineRun/PVC cleanup; and publishes owner-reviewed evidence with explicit sign-off and limitations. Optional cryptographic attestation and SCM publication remain separately isolated.
 
 The MVP Epics should implement smoke compatibility early for learning, then demonstrate conformant mode before declaring the SSC demo integration complete.
 
@@ -1648,95 +1699,244 @@ Determine the minimum SCM behavior required by the existing SSC demo before esti
 
 ## Recommended Epic Decomposition
 
+### Structural alignment with the Assessment & Prioritization epic set
+
+The Vulnerability Prioritization engine referenced throughout this document is being planned as the lightwell-labeled FlightPath epic set (`labels = "lightwell" and Project = FlightPath and issuetype = Epic`):
+
+| A&P Epic | Key | Delivers |
+|---|---|---|
+| Language | FLPATH-4995 | Java 21/Quarkus demo fixture and source-analysis adapter with versioned evidence outputs (`SymbolMappingResult`, `SemanticCallFacts`) and a validation matrix |
+| RFE | FLPATH-4996 | Approved Lightwell enrichment contract and a clearly labelled synthetic advisory for downstream development and testing |
+| Demo Environment | FLPATH-4997 | GitHub repository, Quay organization, tiered PR CI, and the controlled infrastructure and operating workflow for repeatable demo runs |
+| Assessment & Prioritization Pipeline | FLPATH-4998 | Core flow from external assessment submission to `DownstreamImpactReport` delivery, with implementation outcomes AP-1 through AP-5 (FLPATH-5011, FLPATH-5012, FLPATH-5013, FLPATH-5014, FLPATH-5010) and accepted spikes AP-S1 through AP-S3 (FLPATH-5016, FLPATH-5018, FLPATH-5017) |
+| Release | FLPATH-4999 | Versioned, installable MVP release verified in a clean environment |
+
+Their core pipeline Epic uses a goal statement, scope and boundaries, numbered implementation outcomes each mapped to a single story, PoC scope, integration rules, accepted spikes, and a Definition of Done. AI Test Generation should use the same structure inside one Jira Epic. VI/TF/TG are ATG story workstreams; DE and REL identify proposed updates to shared A&P Epics rather than ATG Epics:
+
+| AI Test Generation planning workstream | A&P relationship | Purpose |
+|---|---|---|
+| Shared Demo Environment dependency | Demo Environment (FLPATH-4997) | Extend the existing shared environment for ATG service, model, worker, artifact, credential, and compatibility requirements |
+| VEX & Policy Input (VI) | RFE (FLPATH-4996) | Approved VPE input contract and version-pinned fixtures needed to run the Java-first MVP demo |
+| Target & Framework (TF) | Language (FLPATH-4995) | Java target fixture with an immutable base/candidate pair, repository profile, and native framework adapter |
+| Test Generation Pipeline (TG) | Assessment & Prioritization Pipeline (FLPATH-4998) | The `Analyze -> Plan -> Code -> Execute` flow with numbered outcomes TG-1 through TG-7 and accepted spikes TG-S1 through TG-S3 |
+| Shared Release dependency | Release (FLPATH-4999) | Extend the existing release bundle, clean-environment rehearsal, evidence verification, and operator documentation for ATG |
+
+Presentation order follows dependency sequence rather than A&P key order. Implementation outcomes use workstream-scoped codes (DE, VI, TF, TG, REL) so each can map to one story under a single AI Test Generation Epic, matching the A&P AP-1 through AP-5 pattern.
+
+### Recommended Jira shape
+
+Create one Epic, tentatively named **AI Test Generation MVP**, for the cohesive capability. Create ATG stories for VI-1 through VI-5, TF-1 through TF-5, and TG-1 through TG-7, plus TG-S1 through TG-S3. Do not create duplicate ATG Demo Environment or Release Epics: propose additions to the existing A&P Demo Environment and Release Epics, and link the ATG Epic to those dependencies. Create separate ATG Epics only if ownership, release cadence, security isolation, or independently valuable delivery creates a durable boundary.
+
+### Jira Ticket Creation Requirements
+
+When tickets are approved for creation:
+
+- Use Jira project `FLPATH` (FlightPath).
+- Apply the `lightwell` label to every new AI Test Generation Epic, Story, Task, and Spike.
+- Create one ATG Epic, tentatively **AI Test Generation MVP**; do not create separate ATG Demo Environment or Release Epics unless a later ownership decision justifies them.
+- Create VI, TF, and TG items as Stories or Tasks under the ATG Epic according to the team’s Jira issue-type convention; create TG-S1 through TG-S3 as Spikes if the project supports that issue type.
+- Propose ATG-specific additions to existing `FLPATH-4997` Demo Environment and `FLPATH-4999` Release Epics rather than duplicating their scope. Those updates must also retain the `lightwell` label.
+- Link the ATG Epic and its issues to the relevant A&P issues and shared-Epic dependencies, including `FLPATH-4995` through `FLPATH-4999` where applicable.
+- Preserve the outcome identifiers in summaries or descriptions (`VI-*`, `TF-*`, `TG-*`, `TG-S*`) so the Jira implementation remains traceable to this guidance.
+- Do not create or update Jira tickets until the pre-Epic alignment gate and owner approvals are complete.
+
+The reference discovery query for the related A&P Epic set is:
+
+```text
+project = FLPATH AND labels = "lightwell" AND issuetype = Epic
+```
+
+Review-only Epic, ticket, and shared-Epic update drafts are maintained in [`jira-drafts/`](jira-drafts/). They are not Jira exports and must not be published without owner approval.
+
+### Overlap register for team discussion
+
+Some scope overlaps the A&P epic set by design. These items should be resolved in team discussions rather than duplicated or silently dropped:
+
+| Topic | A&P position | AI Test Generation position | Discussion needed |
+|---|---|---|---|
+| VEX format and delivery | AP-S3 (FLPATH-5017) informs format and evidence mappings; the A&P delivery mechanism remains an integration dependency | The input adapter implements the VPE-provided format, preserves source documents, and rejects unsupported versions | Confirm the VPE retrieval/authentication contract and A&P-to-ATG linkage; synthetic fixtures are for contract tests, not the authoritative MVP input |
+| Prioritization rules engine | AP-S1 (FLPATH-5016) selects OPA/Rego or a justified alternative | ATG ingests an evaluated `VpePolicyDecision`; executable bundles are a post-MVP extension | Decision schema ownership and versioning; whether any ATG-owned run facts ever require bundle evaluation |
+| Pipeline responsibility split | AP-S2 (FLPATH-5018) compares custom controllers/Jobs, Tekton, and hybrid splits | ATG has a parallel execution-provider and controller-boundary decision with human-wait continuation | Shared learnings on lifecycle, reconciliation, callbacks, isolation, and artifact handoff |
+| Java fixture | Language Epic (FLPATH-4995) delivers an FSI Quarkus REST fixture with vulnerable/control call paths | Current ATG target is the Java 21/Quarkus A&P fixture/profile; the Spring Boot FSI demo is compatibility and optional fork material | Confirm the exact shared A&P fixture revision, base/candidate acquisition, and focused differential behavior |
+| Analysis context preparation | AP-2 (FLPATH-5012) prepares fingerprinted context in a resource-limited, network-blocked workspace without ambient credentials | ATG repository analysis and execution isolation require the same properties | Shared `SourceProvider` and context-preparation patterns and credential policy |
+| Result delivery | AP-5 (FLPATH-5010) persists `AssessmentResult`, `Recommendation`, and `DownstreamImpactReport` to a storage-neutral results repository | ATG consumes authorized references and returns signed test evidence linked to VEX statements | Which A&P artifact set is the authoritative ATG input; evidence-store overlap |
+| Demo environment | Demo Environment Epic (FLPATH-4997) establishes the GitHub repository, Quay organization, and PR CI | ATG hosts in the SSC demo (`tssc-app-ci` GitOps/Tekton/RHTPA/RHTAS) | Whether the demos share a cluster, registry organization, or CI conventions |
+| Release | Versioned installable release with a manifests-versus-Helm decision, Quay publication, and clean-environment rehearsal | Same pattern for the ATG service | Aligning versioning, publishing, and release-gate conventions |
+
 ### Pre-Epic alignment gate
 
-The MVP host, initial language, and execution compatibility slot are known: SSC demo, Java/Maven/JUnit, Tekton, and `agentic-test-generation`/`ai-generate-tests`. Before estimating conformant integration, record the exact pilot repository/revisions, active VPE/VEX delivery contract, base/candidate source, service deployment location, RHOAI availability, evidence-store/signing path, and any minimum SCM behavior the existing demo requires. Do not expand that seam into a general SCM workstream.
+The development harness and execution compatibility slot are known: current SSC demo, Tekton, and `agentic-test-generation`/`ai-generate-tests`. The authoritative ATG target remains the Java 21/Quarkus fixture/profile selected with the A&P work; the Spring Boot FSI demo is compatibility and integration baseline material only. Before estimating final-demo integration, record the exact pilot repository/revisions, active VPE/VEX delivery contract, base/candidate source, service deployment location, RHOAI availability, evidence ownership/sign-off path, and any minimum compatibility behavior the final demo requires. Do not expand that seam into a general SCM workstream.
 
-Before Epic approval, reconcile `decision-ledger.md`: mark confirmed portions of implementation direction, MVP human review, baseline-only quantitative targets, combined supplied/discovered context, and mandatory golden references; split evidence ownership and other partially resolved entries so open sub-decisions remain visible.
+Before Epic approval, reconcile `decision-ledger.md`: mark confirmed portions of implementation direction, MVP human review, baseline-only quantitative targets, combined supplied/discovered context, and mandatory golden references; split evidence ownership and other partially resolved entries so open sub-decisions remain visible. Resolve the overlap-register items with the A&P team, and record which A&P spike outcomes (AP-S1, AP-S2, AP-S3) the first stories depend on.
 
-### Epic 0: SSC Demo Baseline and Compatibility Seam
+### Shared A&P Epic Updates: Demo Environment (FLPATH-4997)
 
-Deliver:
+Do not create a duplicate ATG Epic. Propose additions to FLPATH-4997 for the ATG-specific requirements needed by the shared demo environment.
+
+**Scope and boundaries**
+
+The current SSC demo is a temporary development harness and compatibility baseline, not the source of the service architecture or the final integration target. The final demo configuration will be modeled on this environment and delivered separately. This shared-environment work does not replace Argo, Tekton, GitLab, RHTPA, RHTAS, Quay, or Artifactory, and does not select the final model endpoint: an approved OpenAI-compatible profile is configured, and RHOAI migration remains spike-dependent. GitOps is the only deployment path; `oc edit` is not an implementation path.
+
+**Candidate ATG additions to the shared Epic**
+
+DE-1 — Reproduce and measure the current demo:
 
 - Reproducible installation inventory for the active Argo Applications, Tekton resources, namespace, service accounts, RBAC, storage, Secrets, ConfigMaps, Routes, and Java repository.
-- Baseline runs for `/generate-tests` and the active RHTPA/Conforma vulnerability path, with logs/artifacts preserved before PipelineRun/PVC pruning.
+- Baseline runs for `/generate-tests` and the active RHTPA/Conforma vulnerability path, with logs and artifacts preserved before PipelineRun/PVC pruning.
 - Baseline measurements for latency, model usage/cost, retries, collected/executed tests, human checkpoint/review time, and evidence completeness.
-- A version-pinned VPE/VEX request fixture added to the active test path; legacy inactive Nexus/OpenVEX data is documented as reference-only.
+
+DE-2 — Establish the compatibility seam:
+
 - `TektonCompatibilityAdapter` stub at the current `ai-generate-tests` seam, preserving `TESTS_ADDED` and optional `PR_URL` without claiming differential validation.
 - GitOps source/branch, deployment overlay, rollback switch, and exact active pipeline inventory.
+- Smoke compatibility mode explicitly labeled: it validates connectivity and contract translation only.
 
-Exit condition: the current demo path is reproducible, its artifacts and metrics are captured, and a stub service request/result can traverse the existing slot without changing surrounding demo components or being represented as a conformant MVP run.
+DE-3 — Stand up the service operating environment:
 
-### Epic 1: Domain Contracts and Run State
+- Service deployment location decision recorded as a containerized OpenShift workload with a dedicated service account/workload identity.
+- Approved model endpoint profile configured with capability conformance and provenance identity; the current global AI ConfigMap with optional TLS disable is treated as baseline-only.
+- Execution worker images, artifact store, Secrets, RBAC, and network policies for separated controller/model and repository-execution identities.
+- Documented prepare/run/reset workflow that completes repeatably and retains run logs and evidence references.
 
-Deliver:
+**Proposed updates to FLPATH-4997**
+
+- If the fork is selected, create the fork/migration task with source revision, license/ownership review, genericization scope, destination project, divergence policy, and rollback path.
+- Reproduce and measure the current SSC demo baseline before ATG integration.
+- Add the ATG service deployment, approved model endpoint, isolated execution workers, artifact/evidence store, Secrets, RBAC, network policies, and compatibility seam.
+- Preserve GitOps deployment, rollback, prepare/run/reset procedures, and baseline metrics.
+- Add ATG-specific acceptance tasks without duplicating shared cluster, repository, registry, or CI setup.
+
+### Workstream: VEX & Policy Input (VI)
+
+Mirrors A&P RFE (FLPATH-4996). Establishes the approved VPE input contract and the version-pinned fixtures needed to run the Java-first MVP demo.
+
+**Scope and boundaries**
+
+VEX format selection belongs to Vulnerability Prioritization and its evidence consumers (A&P AP-S3); this Epic implements and validates the VPE-provided format and version. Synthetic fixtures are permitted for contract and development tests, but the MVP end-to-end flow consumes the VPE-provided VEX finding required by the ADR. AI Test Generation does not publish, revise, or own VEX records. Executable OPA bundle evaluation remains excluded unless a run-specific policy use case is approved.
+
+**Implementation outcomes**
+
+VI-1 — Validate and admit the driver request:
+
+- `VulnerabilityDriverPayload` validation.
+- VPE/platform request normalization, actor/service authorization, immutable target resolution, and delivery idempotency.
+- Lightwell/Vulnerability Prioritization evidence-reference resolver stub or adapter.
+- Evidence consistency and missing-context findings.
+
+VI-2 — Ingest VEX with source preservation:
+
+- Active, version-pinned VPE VEX ingestion with original document digest, statement identity, issuer, product identity, format/version, and retrieval provenance.
+- Explicit treatment of RHTPA suppression/status output as supporting evidence rather than a substitute for source-preserved VEX.
+
+VI-3 — Ingest evaluated policy decisions:
+
+- VPE evaluated-decision ingestion as a typed, content-addressed `VpePolicyDecision` with obligations and reasons.
+- Executable OPA bundle evaluation excluded from baseline MVP unless separately approved.
+
+VI-4 — Derive driver-neutral objectives:
+
+- `TestObjective` derivation from normalized VEX and policy inputs, preserving upstream uncertainty and limitations.
+
+VI-5 — Publish the fixture set:
+
+- Version-pinned VPE/VEX request fixtures wired into the active GitOps and contract-test paths; legacy inactive Nexus/OpenVEX data documented as reference-only.
+- Clearly labelled synthetic fixtures covering supported VEX statuses plus invalid and unsupported-format/version cases; these fixtures cannot be presented as authoritative VPE evidence.
+
+**Definition of Done**
+
+A source-preserved VPE/VEX fixture produces attributable objectives or explicit gaps; stale, unmapped, inactive-reference-only, or identity-conflicting inputs fail without being converted into authoritative VEX.
+
+### Workstream: Target & Framework (TF)
+
+Mirrors A&P Language (FLPATH-4995). Delivers the Java target fixture and the native framework adapter, with versioned profile and evidence outputs and reproducible fixture artifacts.
+
+**Scope and boundaries**
+
+Java 21/Quarkus first using the A&P fixture/profile; other languages and frameworks remain behind the `FrameworkAdapter` interface. The SSC Spring Boot FSI demo remains compatibility and fork material, not the authoritative ATG target. Repository content can describe commands but cannot authorize them.
+
+**Implementation outcomes**
+
+TF-1 — Deliver and characterize the target fixture:
+
+- Immutable Java 21/Quarkus base/candidate subject pair with an intended-change reference and a VEX statement matching the fixture's dependency.
+- Reproducible fixture artifacts and, where the demo requires them, published image and SBOM identities.
+- Baseline capture of the selected Java 21/Quarkus fixture's tests and coverage.
+- A focused behavior test or explicit limitation establishing whether strict base-fail/candidate-pass evidence is achievable without active exploitation.
+
+TF-2 — Build the repository profile:
+
+- Read-only repository discovery and immutable commit/artifact resolution through the `SourceProvider`.
+- SSC demo Java/Maven/JUnit repository profile: module/subdirectory, framework detection, Maven settings/mirror reference, and approved commands.
+- Approved command/profile model that does not infer authorization from repository files.
+
+TF-3 — Implement the framework adapter:
+
+- `FrameworkAdapter` for the detected native framework: discovery, capability declaration, generated-patch validation, focused commands, and result normalization.
+- Adapter capability detection with declared capabilities rather than inferred ones.
+
+TF-4 — Assess feasibility and target preconditions:
+
+- Per-objective, per-validation-strategy feasibility assessment with invalidation rules.
+- Target-precondition gate for immutable subjects, Java profile, approved commands, artifact mirror, execution provider, and evidence/signing capability.
+
+TF-5 — Validate Java MVP capabilities:
+
+- A validation matrix covering profile accuracy, command approval, adapter capability, feasibility correctness, and abstention behavior on the fixture, with capability gaps recorded.
+
+**Definition of Done**
+
+The pinned target repository produces a reproducible Maven/JUnit profile and a policy-grounded base/candidate feasibility result without a model inventing commands, framework identity, mirror configuration, or environment facts.
+
+### Workstream: Test Generation Pipeline (TG)
+
+Mirrors A&P Assessment & Prioritization Pipeline (FLPATH-4998). Delivers the reconciled `Analyze -> Plan -> Code -> Execute` flow from an authenticated request through contracts, admission and preflight, repository analysis, planning with a human checkpoint, native generation, and isolated base/candidate differential execution with quality gates.
+
+The Epic preserves provenance, evidence, limitations, and explicit failure states. Incomplete processing must never become a silent success or passing comparison.
+
+**Scope and boundaries**
+
+The pipeline Epic owns stage contracts, the controller, model-task execution, and gate evaluation. It does not own the input fixtures (VEX & Policy Input), the target repository profile or framework adapter (Target & Framework), the host environment (Demo Environment), or evidence publication and release composition (Release). Human review at Analyze/Plan is the provisional MVP operating assumption; unattended operation requires a later policy decision.
+
+**Implementation outcomes**
+
+TG-1 — Define domain contracts and run state:
 
 - Versioned schemas for request, evidence references, objectives, plans, checkpoints, feedback, generation, execution, quality, and provenance.
 - `PreflightResult` and self-check/failure-register result contracts.
 - Normalized VEX input and format-specific input-adapter interface.
 - VPE evaluated-policy decision reference, typed obligation, and local policy-composition contracts.
 - Signed differential test record, materialized-test equivalence, attestation, verification, and supersession contracts.
-- State-transition rules and idempotency behavior.
-- Schema fixtures, compatibility tests, and invalid-input tests.
+- State-transition rules and idempotency behavior; schema fixtures, compatibility tests, and invalid-input tests.
 - Framework-neutral `WorkflowController` and `ModelTaskRunner` interfaces.
 - Standard `/generate-tests` trigger/event payload and asynchronous status/callback contract.
 - Authenticated VPE/platform command, identity, tenancy, and correlation contract.
 - `SourceProvider` contract for immutable source retrieval without SCM mutation requirements.
-- Explicit control-plane, execution-plane, and evidence-plane boundaries.
 - Versioned `ModelEndpointProfile`, logical model alias, capability, and fallback-policy contracts.
 - Tekton compatibility request/result, durable run reference, callback, continuation, and bounded artifact-reference contracts.
 - Per-stage/total deadlines, retry ownership, cancellation, cleanup, retention, and recovery semantics.
-- SSC platform-readiness probe for required Secrets, RBAC/service accounts, storage, network, endpoint, artifact/evidence, signing, and execution-provider resources.
+- Explicit control-plane, execution-plane, and evidence-plane boundaries.
+
+TG-2 — Admit runs and verify platform readiness:
+
+- SSC platform-readiness probe for required Secrets, RBAC/service accounts, storage, network, endpoint, artifact/evidence, signing, and execution-provider resources, including the versioned failure register.
 - Run-admission endpoint that authenticates the request, creates the durable run ID, and emits `RunAdmissionResult` or `RunTerminalRecord` before repository/model/execution work.
 
-Exit condition: a complete synthetic run can be represented and replayed without selecting an LLM or orchestration framework, and failed required admission produces no clone, Maven execution, model call, SCM mutation, or differential evidence record.
+TG-3 — Analyze:
 
-### Epic 2: VPE VEX Driver and Evidence Intake
+- Read-only repository/context analysis combining caller-supplied and discovered facts with distinct provenance.
+- `ContextAnalysisResult` and `ObjectiveCandidate[]` with mandatory evidence or source references for every cited symbol, call site, or existing test.
+- Existing-test and coverage inventory relevant to the affected component, symbols, paths, or interfaces.
+- Analyze `StageCheckpoint` with assumptions, open questions, and review packet.
 
-Deliver:
-
-- `VulnerabilityDriverPayload` validation.
-- VPE/platform request normalization, actor/service authorization, immutable target resolution, and delivery idempotency.
-- Lightwell/Vulnerability Prioritization evidence-reference resolver stub or adapter.
-- Evidence consistency and missing-context findings.
-- Active, version-pinned VPE VEX ingestion with original document digest, statement identity, issuer, product identity, format/version, and retrieval provenance.
-- Explicit treatment of RHTPA suppression/status output as supporting evidence rather than a substitute for source-preserved VEX.
-- VPE evaluated-decision ingestion; executable OPA bundle evaluation remains outside baseline MVP unless separately approved.
-- Driver-neutral `TestObjective` derivation.
-
-Exit condition: a source-preserved VPE/VEX fixture produces attributable objectives or explicit gaps; stale, unmapped, inactive-reference-only, or identity-conflicting inputs fail without being converted into authoritative VEX.
-
-### Epic 3: Analyze and Repository Profile
-
-Deliver:
-
-- Read-only repository discovery.
-- Immutable commit/artifact resolution through the `SourceProvider`.
-- SSC demo Java/Maven/JUnit repository profile, including module/subdirectory, Spring Boot versus other framework detection, Maven settings/mirror reference, and approved commands.
-- Approved command/profile model that does not infer authorization from repository files.
-- Adapter capability detection.
-- Feasibility assessment and invalidation rules.
-- Target-precondition gate for immutable subjects, Java profile, approved commands, artifact mirror, execution provider, and evidence/signing capability.
-- Analyze checkpoint and review packet.
-
-Exit condition: the pinned SSC demo repository produces a reproducible Maven/JUnit profile and policy-grounded base/candidate feasibility result without a model inventing commands, framework identity, mirror configuration, or environment facts.
-
-### Epic 4: Plan and Human Review
-
-Deliver:
+TG-4 — Plan and human review:
 
 - Typed model-task prototype for scenario proposals.
 - Deterministic evidence citation, expected-behavior source, duplicate-candidate, and safety gates.
 - Versioned plan artifacts and feedback decisions.
-- Approve/revise/reject/resume behavior with an event-driven continuation contract; no Tekton pod remains allocated while awaiting review.
+- Approve/revise/reject/resume behavior with an event-driven continuation contract; no Tekton pod remains allocated while awaiting review, and resume after controller restart binds the exact approved plan digest. Unsupported behavior is represented as a stated gap.
 
-Exit condition: a real SSC workflow reaches a checkpoint, releases compute, accepts one authenticated decision, rejects duplicate/stale decisions, resumes after controller restart with the exact approved plan digest, and represents unsupported behavior as a stated gap.
+TG-5 — Code:
 
-### Epic 5: Native Test Generation
-
-Deliver:
-
-- Java/native test framework adapter first, using VPE MVP repository conventions; add another language adapter only after the interface is proven.
 - Bounded repository read and patch-write tool surface.
 - Structured generation output and exact-patch provenance.
 - Per-subject materialized-test digest and deterministic equivalence input.
@@ -1745,26 +1945,17 @@ Deliver:
 - Compatibility materialization of the exact patch into the Tekton workspace with `TESTS_ADDED`, allowed-path manifest, and expected patch digest.
 - `SscTektonCompatibilityResult` containing bounded `TESTS_ADDED`, `PR_URL`, `RUN_REF`, `EVIDENCE_REF`, and terminal status fields while canonical records remain external artifacts.
 
-Exit condition: generated tests conform to the detected Java framework and repository patterns; at least one intended test is collected; and the exact accepted patch, allowed paths, plan/checkpoint digest, and materialized content are bound for execution.
-
-### Epic 6: Isolated Execution and Result Normalization
-
-Deliver:
+TG-6 — Execute:
 
 - Execution provider contract and Tekton adapter for two independent ephemeral Java/Maven workers.
-- Focused and related-suite execution.
-- Required base/candidate differential mode for the fix-pinning MVP.
+- Focused and related-suite execution; required base/candidate differential mode for the fix-pinning MVP.
 - Independent base/candidate execution manifests and environment-difference manifest.
 - Required JUnit, log, command, and environment artifact normalization; coverage, mutation, and stability are capability-advertised as `supported`, `not_supported`, or `not_requested`.
 - Typed infrastructure versus behavioral result classification.
 - Separate service/model and repository execution service accounts, Secrets, network policies, and image identities; optional SCM publication credentials remain isolated when enabled.
 - Artifact upload and callback completion before workspace/PVC/TaskRun cleanup.
 
-Exit condition: duplicate callbacks are safe, execution cannot access unapproved credentials or network destinations, and both result records bind to exact source, materialized-test, patch, command, environment, and image digests.
-
-### Epic 7: Quality, Evaluation, and Release Gates
-
-Deliver:
+TG-7 — Evaluate quality and gate release:
 
 - Golden-reference dataset and failure-register cases.
 - Deterministic gate engine and model-assisted review separation.
@@ -1778,61 +1969,112 @@ Deliver:
 - SSC demo failure cases for zero collected tests, wrong framework prompt/profile, empty/assertion-free/skipped tests, weakened repairs, duplicate tests, irrelevant target coverage, base-and-candidate both passing, and unexpected environment differences.
 - Baseline comparison against the current `ai-generate-tests` path using latency, cost, retry, collection, acceptance, review, and evidence metrics.
 
-Exit condition: model, prompt, adapter, or harness changes cannot be promoted without comparable behavioral and evidence results.
+**PoC scope**
 
-### Epic 8: Evidence Publication and Conditional SSC Compatibility
+One Java/Maven/JUnit target repository with an immutable base/candidate pair, one version-pinned VEX/policy fixture, one approved model endpoint profile, and one execution provider (SSC Tekton). The PoC demonstrates the valid happy path plus the required negative differential matrices; remaining failure behavior is covered by contract and unit tests using the same fixtures and shared inputs, without additional services, repositories, or e2e flows.
 
-Deliver:
+**Integration rules**
+
+- A downstream stage executes only when compatible, versioned producer artifacts exist and pass validation.
+- Outcomes may be developed in parallel against contract fixtures.
+- Mocks and representative fixtures may be used during development; mock success does not prove real integration, and matched producer artifacts are required for integrated acceptance.
+- Each independently testable component has a documented local validation path, contract fixtures, and failure-mode tests before it is accepted through the integrated demo; tightly coupled behavior may be validated at the nearest meaningful integration boundary.
+- Spikes are focused decisions, not a global gate for all implementation.
+- Deterministic gates cannot be overridden by model self-assessment.
+
+**Accepted spikes**
+
+- TG-S1 — Implementation-harness vertical slice: run the research-spike shape below with an explicit state machine, a deterministic fake model, and the current demo endpoint; compare LangGraph, Pydantic AI, and `ai-test-harness` reuse only where the baseline exposes concrete need. Recommends a stack per layer, components to reuse, and reconsideration triggers.
+- TG-S2 — Execution-provider responsibility split: Tekton-owned versus service-owned workers, and callback, cancellation, retention, and cleanup ownership. Coordinate with A&P AP-S2 (FLPATH-5018) rather than duplicating it.
+- TG-S3 — Evidence, signing, and attestation path: envelope and predicate, signer and workload identity, configured store, and verifier API for the demo. A spike-owned verifier is acceptable until the final SSC consumer is selected.
+
+Dependencies on A&P spike outcomes are consumed rather than duplicated: AP-S1 (FLPATH-5016) informs the `VpePolicyDecision` schema VI-3 ingests, and AP-S3 (FLPATH-5017) determines the VEX format and identity conventions VI-2 implements.
+
+**Definition of Done**
+
+- Versioned stage contracts plus mocked adapters pass contract tests for statuses, provenance, limitations, and failure cases; a complete synthetic run can be represented and replayed without selecting an LLM or orchestration framework.
+- A real SSC workflow reaches a checkpoint, releases compute, accepts one authenticated decision, rejects duplicate/stale decisions, and resumes after controller restart with the exact approved plan digest.
+- Duplicate execution callbacks are safe, execution cannot access unapproved credentials or network destinations, and both result records bind to exact source, materialized-test, patch, command, environment, and image digests.
+- Model, prompt, adapter, or harness changes cannot be promoted without comparable behavioral and evidence results.
+- Failed required admission produces no clone, Maven execution, model call, SCM mutation, or differential evidence record.
+
+### Shared A&P Epic Updates: Release (FLPATH-4999)
+
+Do not create a duplicate ATG Release Epic. Propose additions to FLPATH-4999 for ATG-specific release, evidence, and clean-environment acceptance.
+
+**Proposed updates to FLPATH-4999**
+
+REL-1 — Add ATG signed evidence publication:
 
 - Evidence manifest, generated-test artifact, provenance, and configured evidence-store publication.
-- Review summary constrained for human readability.
-- Conditional `PublicationIntent` and SSC adapter integration only if required by the existing GitLab PR/MR flow; service-owned branch/PR mutation is not an MVP requirement.
-- Conditional check/status publication and provider-neutral publication-result normalization.
-- Signed evidence/attestation output and configured-verifier result.
-- Assembly, signing, verification, and publication of `SignedDifferentialTestRecord`; optional PR/MR attachment is secondary.
-- Signed test evidence linked to the source VEX document and statement for return to Vulnerability Prioritization/Lightwell.
-- Exact VPE policy-decision provenance included in the signed evidence manifest; optional bundle provenance applies only if that extension is selected.
-- Approval, rejection, supersession, and retention events.
-- Configured artifact/evidence store, attestation signer/workload identity, retention policy, and policy/evidence-consumer verification API. A spike-owned verifier is acceptable until the final SSC consumer is selected.
-- When SCM publication is enabled, fail closed unless branch/MR content matches the approved, executed, and signed patch digest.
+- Assembly, signing, verification, and publication of `SignedDifferentialTestRecord`; review summary constrained for human readability.
+- Signed test evidence linked to the source VEX document and statement, with exact VPE policy-decision provenance, for return to Vulnerability Prioritization/Lightwell.
+- Approval, rejection, supersession, and retention events; configured artifact/evidence store, attestation signer/workload identity, retention policy, and policy/evidence-consumer verification API.
+- Conditional provider-specific SCM triggering and publication adapters only if required by the existing GitLab PR/MR flow; any promoted generated test must use a human-reviewed pull request or explicitly approved equivalent and fail closed unless the change matches the approved, executed, and signed patch digest.
 - Evidence persistence test proving signed record, patch, base/candidate reports, and verification material remain resolvable after PipelineRun and PVC pruning.
 
-Exit condition: a reviewer and configured verifier can validate one signed record and generated-test artifact that trace the test to its objective, exact content on both subjects, both execution results, comparison, environment differences, limitations, and model/tool identities. Any SCM behavior is limited to what the existing demo requires.
-
-### Epic 9: SSC Demo MVP Composition
-
-Deliver:
+REL-2 — Add ATG flow to the shared demo composition:
 
 - GitOps-deployed service, compatibility adapter, continuation path, execution workers, and evidence integration in the active SSC demo source branch.
 - VPE/VEX-initiated Java run using immutable base/candidate subjects and an approved Analyze/Plan checkpoint.
-- Existing demo-compatible status/results backed by canonical durable evidence references; GitLab review publication is optional.
+- Required positive Java differential fixture: intended test collects on both subjects, base exhibits expected vulnerable/old behavior, candidate exhibits expected fixed behavior, materialized test equivalence is recorded, and the emitted test artifact matches the exact verified patch.
+- Negative matrices for both pass, both fail, environment mismatch, patch drift, and one missing-side execution.
+- Existing demo-compatible status/results backed by canonical durable evidence references; GitLab-specific review publication is conditional, while human-reviewed test delivery remains required by the ADR.
 - Rollback to the legacy smoke task without losing the baseline configuration.
 - Updated runbook, topology, secret/RBAC/network requirements, failure recovery, and operator demonstration steps.
 - End-to-end metrics comparing the conformant service path with the captured baseline.
-- Required positive Java differential fixture: intended test collects on both subjects, base exhibits expected vulnerable/old behavior, candidate exhibits expected fixed behavior, materialized test equivalence is recorded, and the emitted test artifact matches the exact verified patch.
-- Negative matrices for both pass, both fail, environment mismatch, patch drift, and one missing-side execution.
 
-Exit condition: the VPE-initiated SSC demo flow executes the provisional ADR MVP Definition of Done without relying on inactive VEX data, retaining a worker during human review, exposing model credentials to repository execution, or treating one-tree Maven success as differential fix evidence. Any SCM interaction is demonstrably limited to the existing flow's required compatibility seam.
+REL-3 — Extend the shared versioned release:
 
-### Epic dependencies
+- Raw Kubernetes manifests versus Helm decision recorded and implemented.
+- Service OCI image and build-linked SBOM published to Quay with version/digest references.
+- Release bundle including deployment automation, configuration, and versioned contract, policy, and adapter references.
+- Installation, profile setup, upgrade, cleanup, and troubleshooting instructions verified against the bundle.
+- Clean-environment rehearsal completing the Java demo through signed differential evidence, including representative failure cases.
+
+**Proposed shared-release acceptance**
+
+- The shared release includes the ATG service, signed evidence, verifier path, generated-test artifact, and operator documentation.
+- The VPE-initiated SSC demo flow executes the ADR MVP Definition of Done without retaining a worker during human review, exposing model credentials to repository execution, or treating one-tree Maven success as differential fix evidence.
+- A clean-environment rehearsal validates both A&P and ATG flow dependencies from the shared release bundle.
+
+### Mapping from the previous decomposition
+
+The earlier capability-sequenced Epic 0-9 decomposition is preserved as implementation outcomes:
+
+| Previous | New location |
+|---|---|
+| Epic 0: SSC Demo Baseline and Compatibility Seam | Proposed updates to shared FLPATH-4997 Demo Environment Epic |
+| Epic 1: Domain Contracts and Run State | AI Test Generation MVP story group TG-1, TG-2 |
+| Epic 2: VPE VEX Driver and Evidence Intake | AI Test Generation MVP story group VI-1 through VI-4 |
+| Epic 3: Analyze and Repository Profile | AI Test Generation MVP story groups TF-2 through TF-4 and TG-3 |
+| Epic 4: Plan and Human Review | AI Test Generation MVP story group TG-4 |
+| Epic 5: Native Test Generation | AI Test Generation MVP story groups TF-3 and TG-5 |
+| Epic 6: Isolated Execution and Result Normalization | AI Test Generation MVP story group TG-6; shared environment updates in FLPATH-4997 |
+| Epic 7: Quality, Evaluation, and Release Gates | AI Test Generation MVP story group TG-7 |
+| Epic 8: Evidence Publication and Conditional SSC Compatibility | Proposed updates to shared FLPATH-4999 Release Epic |
+| Epic 9: SSC Demo MVP Composition | Proposed updates to shared FLPATH-4999 Release Epic |
+
+### Workstream dependencies within the Epic
 
 ```text
-Epic 0: SSC demo baseline and compatibility seam
-  -> Epic 1: contracts and run state
-       -> platform readiness and run admission
-       -> Epic 2: vulnerability evidence intake
-            -> Epic 3: repository analysis and target preconditions
-                 -> Epic 4: plan and review
-                      -> Epic 5: native generation
-                           -> Epic 6: isolated execution
-                                -> Epic 8: evidence publication and conditional SSC compatibility
-                                     -> Epic 9: SSC demo MVP composition
-
-Epic 7: evaluation and release gates
-  starts with Epic 1 fixtures and expands alongside Epics 2-6
+Shared FLPATH-4997 Demo Environment Epic (baseline and compatibility seam)
+  -> VEX & Policy Input workstream (contract and fixtures; VI-2 format follows A&P AP-S3)
+  -> Target & Framework workstream (fixture, repository profile, adapter, feasibility)
+       -> Test Generation Pipeline workstream
+            TG-1 contracts and fixtures
+              -> TG-2 admission and platform readiness
+                   -> TG-3 analyze
+                        -> TG-4 plan and human review
+                             -> TG-5 code
+                                  -> TG-6 isolated execution
+                                       -> TG-7 quality, differential, and release gates
+                                            -> Shared FLPATH-4999 Release Epic (REL-1 evidence, REL-2 composition, REL-3 release)
 ```
 
-Epic 7 is not a final hardening phase. Its golden references, failure cases, and measurements should be added as each capability is introduced.
+TG-S1 runs once TG-1 contracts and the VI/TF fixtures exist; TG-S2 informs TG-6; TG-S3 informs REL-1.
+
+TG-7 is not a final hardening phase. Its golden references, failure cases, and measurements should be added as each capability is introduced.
 
 ## Cross-Epic Acceptance Guidance
 
@@ -1857,7 +2099,7 @@ Avoid acceptance criteria such as "the agent successfully analyzes the repositor
 
 ## Research Spike Shape
 
-The spike should implement one thin vertical slice rather than isolated framework demos:
+The spike is accepted as TG-S1 under the AI Test Generation MVP Epic. It should implement one thin vertical slice rather than isolated framework demos:
 
 ```text
 Active, version-pinned VPE/VEX fixture
@@ -1893,6 +2135,8 @@ First record the legacy smoke path, then run the conformant slice through the se
 
 The spike result should recommend a stack per layer, identify components to reuse from existing work, and record which findings would trigger reconsideration. It should not redefine the service contracts to match the winning framework.
 
+Coordinate with the A&P spikes rather than duplicating them: AP-S1 (FLPATH-5016, rules engine) determines the `VpePolicyDecision` schema; AP-S2 (FLPATH-5018, pipeline responsibility split) shares lifecycle, callback, and isolation learnings with TG-S2; AP-S3 (FLPATH-5017, VEX format and evidence mappings) determines the input format the spike fixture uses.
+
 ## Sources
 
 - [AI Test Generation ADR](adr-ai-test-generation.md)
@@ -1903,6 +2147,7 @@ The spike result should recommend a stack per layer, identify components to reus
 - [Updated AI Test Harness Blueprint Business Case](../AI%20Test%20Harness%20Blueprint%20Business%20Case.md)
 - [SSC Demo MVP Alignment](ssc-demo-mvp-alignment.md)
 - [Secure Software Supply Chain SDLC ADR](../ADR%20-%20Secure%20Software%20Supply%20Chain%20SDLC.md)
+- [Assessment & Prioritization Epics (FlightPath, lightwell label)](https://redhat.atlassian.net/browse/FLPATH-4998) — Language [FLPATH-4995](https://redhat.atlassian.net/browse/FLPATH-4995), RFE [FLPATH-4996](https://redhat.atlassian.net/browse/FLPATH-4996), Demo Environment [FLPATH-4997](https://redhat.atlassian.net/browse/FLPATH-4997), Assessment & Prioritization Pipeline [FLPATH-4998](https://redhat.atlassian.net/browse/FLPATH-4998), Release [FLPATH-4999](https://redhat.atlassian.net/browse/FLPATH-4999)
 - [OpenVEX specification](https://github.com/openvex/spec)
 - [OASIS CSAF 2.0](https://docs.oasis-open.org/csaf/csaf/v2.0/csaf-v2.0.html)
 - [CycloneDX VEX](https://cyclonedx.org/capabilities/vex/)
