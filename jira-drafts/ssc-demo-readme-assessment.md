@@ -30,8 +30,9 @@ Status: Review-only analysis. No Jira changes were made.
 
 - Reuse or fork the Maven settings/profile and dependency-switch scripts after removing embedded or environment-specific credential assumptions.
 - Reuse the existing test tiers, JaCoCo reports, OpenAPI contract, dependency tree, SBOM process, and presenter documentation as baseline artifacts.
-- Genericize hard-coded Lightwell names, credentials, endpoints, repository paths, and demo-only assumptions in a fork.
+- Genericize hard-coded Lightwell names, credentials, endpoints, repository paths, and demo-only assumptions in a temporary fork.
 - Keep the original repository as a development baseline and rollback reference; the final demo configuration remains a separate delivery target modeled on this harness.
+- Record that all current repositories and Git/GitLab projects are temporary until product-project and repository ownership converge.
 
 ## Draft Changes Required
 

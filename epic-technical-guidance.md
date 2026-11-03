@@ -10,6 +10,19 @@ This revision aligns the AI Test Generation Epic and story structure with the co
 
 This is implementation guidance, not an additional ADR. Recommendations about specific frameworks remain provisional until the spike verifies licensing, operational fit, maintenance, security, and Lightwell integration constraints.
 
+## Terminology: ATG
+
+In this guidance, **ATG** means **AI Test Generation**:
+
+- **ATG service/product:** the driver-agnostic service implementing `Analyze -> Plan -> Code -> Execute`, evidence production, checkpoints, gates, and isolated execution.
+- **ATG MVP Epic:** the proposed `FLPATH` Epic named **AI Test Generation MVP**, labeled `lightwell`.
+- **ATG repository:** the current temporary experiment repository for service and contract work; its eventual product project and repository are not yet selected.
+- **ATG development harness:** the temporary SSC demo integration used to learn, smoke-test, and reduce integration work. Its repository, fork, and project are also temporary; it is not the ATG architecture or authoritative target fixture.
+- **ATG final demo integration:** the separately delivered configuration that composes ATG with A&P/VPE, shared platform services, execution, evidence, and release behavior.
+- **A&P/VPE:** the upstream Assessment & Prioritization/Vulnerability Prioritization work that supplies authoritative vulnerability evidence; it is not part of ATG.
+
+Use the full name `AI Test Generation` in ticket summaries when the abbreviation could be ambiguous. Use `ATG` as shorthand only after this distinction is established.
+
 ## Epic-Readiness Assessment
 
 Where the documentation stands for Epic creation:
@@ -29,8 +42,9 @@ Resolved by this revision:
 Still open before Epic approval:
 
 - The pre-Epic alignment gate items: exact pilot repository/revisions, active VPE/VEX delivery contract, base/candidate source, final demo deployment location, RHOAI availability, evidence ownership/sign-off path, and minimum compatibility behavior required by the final demo configuration.
+- Final demo configuration and fork ownership remain open; the current SSC deployment is a development harness with environment-specific workarounds and incomplete smoke-path prerequisites.
 - Decision-ledger reconciliation: mark confirmed entries and split partially resolved ones so open sub-decisions remain visible.
-- Assessment & Prioritization dependency confirmations recorded in the overlap register: VEX format and export timing (AP-S3), policy decision schema (AP-S1), execution responsibility split (AP-S2), Java fixture choice, and demo environment sharing.
+- Assessment & Prioritization dependency confirmations recorded in the overlap register: VEX format and delivery contract (AP-S3), policy decision schema (AP-S1), execution responsibility split (AP-S2), Java fixture revision, and demo environment sharing.
 - Implementation-research spike results for the spike-dependent decisions listed in Decisions the Spike Must Inform.
 
 ## Planning Authority and Architectural Starting Point
@@ -1599,9 +1613,9 @@ Evaluate the existing SSC demo as implementation source material and a potential
 - Reuse proven Argo, Tekton, GitOps, GitLab/SCM, model-endpoint, artifact, and operator patterns where they reduce MVP work.
 - Preserve the current demo as a baseline and rollback reference; do not treat its task parameters, linear workflow, credential placement, one-tree execution, or current result fields as authoritative ATG contracts.
 - Fork and genericize the relevant demo repository/components when direct modification is the fastest path to the MVP. The fork should expose provider-neutral service interfaces and replace demo-specific names, credentials, routes, assumptions, and hard-coded repository behavior.
-- Move the forked repository to an appropriate organizational project, and place the AI Test Generation implementation in its appropriate project, before treating either repository as a long-term product source.
+- Treat the current fork destination and AI Test Generation repository/project as temporary experiment locations. Record the eventual product-project and repository-convergence decision before treating either as a long-term product source.
 - Record the fork source revision, license/ownership terms, retained components, removed assumptions, divergence policy, upstream synchronization policy, and repository owners.
-- Keep the forked demo and AI Test Generation service independently versioned while preserving a tested integration path and rollback to the captured baseline.
+- Keep the temporary fork and AI Test Generation service independently versioned while preserving a tested integration path and rollback to the captured baseline; plan eventual convergence onto the approved product project and repository set.
 
 The fork decision is an implementation and ownership choice, not an ADR invariant. A clean implementation remains acceptable if it provides stronger evidence, security isolation, maintainability, or portability than adapting the demo.
 
@@ -1620,13 +1634,26 @@ The fork decision is an implementation and ownership choice, not an ADR invarian
 | Tekton resources are plain YAML reconciled by Argo self-heal | Demo integration changes require a GitOps source/branch and rollback plan; `oc edit` is not an implementation path |
 | The current AI ConfigMap is one global endpoint profile and can disable TLS verification | Treat it as baseline-only; shared MVP environments require an approved endpoint profile, TLS verification, capability conformance, and provenance identity |
 
+### Experiment-derived planning consequences
+
+Recent SSC experiments validate the development-harness approach but do not establish final architecture or readiness for a conformant MVP:
+
+- The platform baseline can be prepared independently: OpenShift 4.20, GitOps, Pipelines, storage, GitLab, Keycloak, Quay, RHTAS, and RHTPA were brought up or verified. The SSC app-of-apps and final demo configuration remain a separate delivery step.
+- The current endpoint path is OpenAI-compatible and reachable in-cluster, but endpoint/model identity, credentials, TLS trust, and tenant/data policy must be represented by the service-owned endpoint profile rather than copied from the demo override.
+- The first `agentic-test-generation` baseline took approximately 32 minutes at high effort; a follow-up took approximately 5 minutes 48 seconds at medium effort and generated four files. These are observations for the cost/latency baseline, not acceptance targets.
+- The current publication task masked GitLab API errors; a local fork-side API implementation exposed failures and created an MR. This supports forking and genericizing the demo, but publication behavior must be contract-tested and cannot be treated as reliable until the fork change is reviewed and promoted.
+- Development-cluster workarounds include broad Argo permissions, TLS/CA overrides, ODF/NooBaa hook differences, and catalog-version adjustments. These are environment findings and must not become service contracts or production security defaults.
+- Required demo secrets and full smoke-path validation remain prerequisites. The current task still combines model credentials, repository edits, and Maven execution, runs one tree, and lacks VPE/VEX, checkpoint, and differential evidence behavior.
+
+Readiness consequence: the team is ready to draft the ATG Epic and component-level tickets, and to continue development-harness experiments. The team is not ready to claim conformant MVP integration or publish final shared-demo/release tickets until the final demo configuration, fork ownership, secrets, preflight boundary, credential isolation, base/candidate path, and evidence consumer are approved.
+
 ### Smoke compatibility versus conformant MVP
 
 **Smoke compatibility mode** replaces or wraps the current `ai-generate-tests` Task, returns `TESTS_ADDED`, materializes a test patch into the existing workspace, and preserves the current `mvn verify`/PR steps. It validates connectivity and contract translation only. It must not claim stage-zero protection, human checkpoint durability, credential isolation, or differential fix validation.
 
 **Conformant MVP mode** moves request acceptance and required preflight before repository clone/build; uses source-preserved VPE/VEX input; resolves the A&P-selected Java 21/Quarkus immutable base/candidate subjects; separates controller and execution credentials; pauses without allocated compute; runs the exact approved test independently on both subjects; persists artifacts before PipelineRun/PVC cleanup; and publishes owner-reviewed evidence with explicit sign-off and limitations. Optional cryptographic attestation and SCM publication remain separately isolated.
 
-The MVP Epics should implement smoke compatibility early for learning, then demonstrate conformant mode before declaring the SSC demo integration complete.
+The ATG Epic should implement smoke compatibility early for learning, then demonstrate conformant mode in the separately delivered final demo configuration before declaring SSC integration complete.
 
 ### Demo-specific operational contract
 

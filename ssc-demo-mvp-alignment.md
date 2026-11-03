@@ -8,7 +8,7 @@ This document aligns the AI Test Generation MVP with `/Users/tstetson/Public/wor
 
 The objective is to use the current SSC demo as a temporary development harness while building a VPE-initiated Java 21/Quarkus test-generation flow for the A&P-selected authoritative fixture. The eventual integration target is a separately delivered final demo configuration modeled on this harness. Generated tests are delivered through a human-reviewed pull request or explicitly approved equivalent only when required by that final configuration; provider-specific SCM triggering and publication are not design inputs from this development harness.
 
-The existing `ssc-demo` repository is a reusable implementation baseline, not a binding architecture. The MVP may fork and genericize its pipelines, tasks, GitOps resources, and integration patterns when that is more efficient than rebuilding them. The fork and the AI Test Generation repository should move to appropriate organizational projects with recorded ownership, license, source revision, divergence, synchronization, and rollback policies.
+The existing `ssc-demo` repository is a reusable implementation baseline, not a binding architecture. The MVP may fork and genericize its pipelines, tasks, GitOps resources, and integration patterns when that is more efficient than rebuilding them. The current `ssc-demo` checkout, any fork, and the AI Test Generation repository/project are temporary experiment locations. Record ownership, license, source revision, divergence, synchronization, rollback, and the eventual product-project/repository convergence decision.
 
 ## Current Demo Baseline
 

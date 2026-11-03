@@ -14,14 +14,14 @@ Summary: Fork and genericize SSC demo components for AI Test Generation integrat
 
 Description:
 
-Evaluate the existing SSC demo repository and manifests as reusable implementation material. If selected, fork the required pipelines, tasks, GitOps resources, and integration components; remove demo-specific assumptions; and move the fork to the appropriate organizational project.
+Evaluate the existing SSC demo repository and manifests as reusable implementation material. If selected, fork the required pipelines, tasks, GitOps resources, and integration components; remove demo-specific assumptions; and place the fork in a temporary experiment project while recording the eventual product-project and repository-convergence decision.
 
 Acceptance criteria:
 
-- Source revision, license, ownership, destination project, retained components, removed assumptions, and divergence policy are recorded.
+- Source revision, license, ownership, temporary destination project, retained components, removed assumptions, and divergence policy are recorded.
 - The fork exposes provider-neutral interfaces where required.
 - Baseline and rollback references to the existing SSC demo remain available.
-- Forked repository and ATG repository ownership are explicit.
+- Forked repository and temporary ATG repository ownership are explicit, with eventual product ownership left as a recorded decision.
 
 ### Proposed task: Add ATG service integration environment
 

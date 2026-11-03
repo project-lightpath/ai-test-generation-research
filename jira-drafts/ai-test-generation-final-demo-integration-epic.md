@@ -2,13 +2,15 @@
 
 Status: Draft for review. Do not publish without owner approval.
 
+Terminology: ATG refers to the AI Test Generation service/product. This Epic integrates the ATG MVP into the final demo configuration; it does not define the ATG service contracts or the temporary SSC development harness. Current repositories and Git/GitLab projects are temporary experiment locations pending product-project and repository convergence.
+
 ## Jira Metadata
 
 | Field | Proposed value |
 |---|---|
 | Project | `FLPATH` (FlightPath) |
 | Issue type | Epic |
-| Summary | AI Test Generation Final Demo Integration |
+| Summary | AI Test Generation Demo Integration |
 | Labels | `lightwell` |
 | Parent | None |
 | Depends on | AI Test Generation MVP capability; Assessment & Prioritization outputs; shared Demo Environment and Release work |
