@@ -111,6 +111,31 @@ The implementation language and package names remain provisional. The directory 
 - Generated tests and repository patches are written only through authorized tools and approved paths.
 - Every artifact used in differential evidence is content-addressed and traceable to the contract, source, command, environment, and tool identity that produced it.
 
+## Contributor Operating Model
+
+Use four reinforcing mechanisms rather than relying on the directory tree alone:
+
+1. **Canonical map:** Keep this file as the authoritative workstream-to-path and contract map. Changes to a boundary or shared path require updating this file in the same change.
+2. **Path ownership:** Add temporary `OWNERS.md` or `CODEOWNERS` entries for `contracts/`, `src/atg/domain`, each adapter family, `tests/`, `fixtures/`, `experiments/`, and `deploy/`. The eventual product project can replace temporary owners without changing the boundaries.
+3. **Ticket integration fields:** Every Story, Task, and Spike should identify `Workstream`, `Integration point`, `Contract/port`, `Tests to add`, `Dependencies`, and `Do not modify`. A contributor should be able to select a path before starting work.
+4. **Automated checks:** CI should validate schema compatibility, import/dependency direction, contract tests, fixture provenance, secret scanning, and path ownership. A mock or replay test proves component behavior; a separate integration job proves the real platform adapter.
+
+### Ticket-to-path template
+
+```text
+Workstream: VI | TF | TG | TG-S1 | TG-S2 | TG-S3 | Demo | Final Demo
+Integration point: <directory or file family>
+Contract/port: <versioned schema or interface>
+Tests to add: <unit | contract | component | replay | integration | evaluation>
+Dependencies: <ticket keys and contract versions>
+Do not modify: <other workstream paths, production credentials, temporary demo assumptions>
+Evidence: <fixture, replay, report, or artifact manifest>
+```
+
+### Cross-track change rule
+
+If a change crosses a workstream boundary, the contributor must update the contract or port first, add compatibility tests, identify the affected owners, and link the dependent Jira tickets. Do not import another track's internal implementation to avoid defining an interface.
+
 ## First Integration Sequence
 
 1. TG-1 establishes schemas, ports, status taxonomy, and state transitions.

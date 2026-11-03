@@ -6,6 +6,8 @@ Creation status: The proposed Epic and ticket set was created in Jira on 2026-11
 
 In these drafts, **ATG** means the AI Test Generation service/product and its proposed MVP Epic. It does not mean the temporary SSC development harness, the forked SSC repository, A&P/VPE, or the separately delivered final demo integration. All current repositories, forks, and Git/GitLab projects are temporary experiment locations; eventual product-project and repository convergence remains open.
 
+Canonical implementation repository: <https://github.com/project-lightpath/ai-test-generation>. Jira descriptions now reference the relevant paths in this repository by workstream.
+
 ## Ticketing Defaults
 
 - Project: `FLPATH` (FlightPath)
