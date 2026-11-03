@@ -1,6 +1,13 @@
 # Proposed Tickets: AI Test Generation MVP
 
-Status: Draft for review. Do not publish without owner approval.
+Status: Created in Jira; this file remains the review/source copy for the created child tickets.
+
+Created Jira issue ranges:
+
+- VI-1 through VI-5: `FLPATH-5032` through `FLPATH-5036`
+- TF-1 through TF-5 and TF-1a: `FLPATH-5037` through `FLPATH-5042`
+- TG-1 through TG-7 and TG-S1 through TG-S3: `FLPATH-5043` through `FLPATH-5052`
+- FDI-1 through FDI-4: `FLPATH-5053` through `FLPATH-5056` (documented separately under the Final Demo Integration Epic)
 
 All tickets below use:
 

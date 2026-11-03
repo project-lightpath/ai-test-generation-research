@@ -1,6 +1,8 @@
 # Proposed Epic: AI Test Generation MVP
 
-Status: Draft for review. Do not publish without owner approval.
+Status: Created in Jira; this file remains the review/source copy for `FLPATH-5030`.
+
+Created Jira issue: `FLPATH-5030`.
 
 ## Jira Metadata
 

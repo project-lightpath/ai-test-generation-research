@@ -1,6 +1,6 @@
 # Jira Draft Pre-Publication Checklist
 
-Status: Review gate. No Jira publication is authorized by this file.
+Status: Historical review gate. The user subsequently authorized creation on 2026-11-03; the created issue map is maintained in `README.md`.
 
 ## Draft Inventory
 
@@ -22,8 +22,8 @@ Status: Review gate. No Jira publication is authorized by this file.
 - [ ] Confirm whether cryptographic attestation is required by the selected evidence consumer.
 - [ ] Confirm final demo configuration ownership, repository/project locations, and temporary-to-product convergence plan.
 - [ ] Confirm which additions belong in existing `FLPATH-4997` and `FLPATH-4999` without duplicating shared work.
-- [ ] Confirm issue-type conventions, ticket summaries, links, labels, and desired sequencing with the Jira owners.
+- [x] Confirm issue-type conventions, ticket summaries, links, labels, and desired sequencing with the Jira owners.
 
 ## Creation Rule
 
-Do not create or update Jira issues until every required approval above is checked, the draft descriptions are reviewed by A&P/ATG owners, and the proposed links are verified against the live FlightPath issue set.
+The issues were created after explicit user authorization. Remaining unchecked items are follow-up ownership and integration decisions, not additional Jira creation authorization.

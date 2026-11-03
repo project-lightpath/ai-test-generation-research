@@ -15,6 +15,7 @@ Canonical repository: <https://github.com/testetson22/ai-test-generation>
 - [`tool-reliability-findings.md`](tool-reliability-findings.md) - concrete observed failures, scope limitations, and reported operational shortcomings in existing tools.
 - [`evaluation-harness-landscape.md`](evaluation-harness-landscape.md) - assessment of CyberGym and comparable external benchmarks as evaluation harnesses.
 - [`epic-technical-guidance.md`](epic-technical-guidance.md) - Epic-preparation guidance for harness selection, service contracts, pre-spike decisions, and an A&P-aligned single AI Test Generation Epic with VI/TF/TG stories plus updates to shared Demo Environment and Release Epics.
+- [`repository-layout.md`](repository-layout.md) - Temporary repository and integration-boundary sketch for parallel contributors, contracts, adapters, tests, experiments, and deployment composition.
 - [`ssc-demo-mvp-alignment.md`](ssc-demo-mvp-alignment.md) - MVP alignment with the existing SSC demo, replacement seam, setup discovery, and integration gaps.
 - [`vvah-test-generation-extension.md`](vvah-test-generation-extension.md) - maps VVAH findings and Context Graph capabilities to potential test-generation extensions.
 - [`vulnerability-driven-structure.md`](vulnerability-driven-structure.md) - decision-neutral high-level structure for feeding Vulnerability Prioritization evidence into AI Test Generation.

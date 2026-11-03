@@ -2,6 +2,8 @@
 
 Status: Draft for review. Do not publish without A&P and ATG owner approval.
 
+Created child issues under the existing shared Epics: `FLPATH-5057` and `FLPATH-5058` under `FLPATH-4997`; `FLPATH-5059` through `FLPATH-5061` under `FLPATH-4999`.
+
 All proposed additions use project `FLPATH` and label `lightwell`. These are updates to existing Epics, not new ATG Epics.
 
 ## FLPATH-4997: Demo Environment

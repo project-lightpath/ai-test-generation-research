@@ -1,6 +1,8 @@
 # Proposed Epic: AI Test Generation Final Demo Integration
 
-Status: Draft for review. Do not publish without owner approval.
+Status: Created in Jira; this file remains the review/source copy for `FLPATH-5031`.
+
+Created Jira issue: `FLPATH-5031`.
 
 Terminology: ATG refers to the AI Test Generation service/product. This Epic integrates the ATG MVP into the final demo configuration; it does not define the ATG service contracts or the temporary SSC development harness. Current repositories and Git/GitLab projects are temporary experiment locations pending product-project and repository convergence.
 

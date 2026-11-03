@@ -1775,6 +1775,8 @@ project = FLPATH AND labels = "lightwell" AND issuetype = Epic
 
 Review-only Epic, ticket, and shared-Epic update drafts are maintained in [`jira-drafts/`](jira-drafts/). They are not Jira exports and must not be published without owner approval.
 
+The temporary repository and parallel-contributor integration map is maintained in [`repository-layout.md`](repository-layout.md). It defines the proposed contract, port, adapter, test, experiment, and deployment boundaries without selecting the eventual product repository or project.
+
 ### Overlap register for team discussion
 
 Some scope overlaps the A&P epic set by design. These items should be resolved in team discussions rather than duplicated or silently dropped:
