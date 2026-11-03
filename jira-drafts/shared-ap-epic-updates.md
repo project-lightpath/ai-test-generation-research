@@ -8,7 +8,7 @@ All proposed additions use project `FLPATH` and label `lightwell`. These are upd
 
 ### Proposed task: Fork and genericize SSC demo implementation
 
-Issue type: Task or Story
+Issue type: Task
 
 Summary: Fork and genericize SSC demo components for AI Test Generation integration
 
@@ -64,7 +64,7 @@ Acceptance criteria:
 
 ### Proposed task: Extend shared release and clean-environment rehearsal
 
-Issue type: Task or Story
+Issue type: Task
 
 Summary: Release and rehearse the integrated A&P and AI Test Generation flow
 

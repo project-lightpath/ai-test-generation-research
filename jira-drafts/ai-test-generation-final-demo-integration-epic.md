@@ -37,14 +37,57 @@ The current `ssc-demo` is development and compatibility material, not the target
 - Broad SCM integration beyond the final demo's required compatibility seam.
 - Replacing A&P/VPE prioritization or authoring VEX.
 
-## Candidate Child Work
+## Proposed Child Tickets
 
-Detailed child tickets should be created after the final demo contract is available. Likely work includes:
+These child tickets remain draft-only and should be refined after the final demo contract is available:
 
-- Final demo integration contract and ownership confirmation.
-- GitOps deployment, configuration, secrets, RBAC, network, and execution-provider integration.
-- VPE-to-ATG request and evidence-path composition.
-- Final-demo end-to-end rehearsal, rollback, cleanup, and operator documentation.
+### FDI-1 - Confirm final demo integration contract and ownership
+
+Issue type: Task
+
+Summary: Confirm final demo integration contract, ownership, and temporary repository boundaries
+
+Acceptance criteria:
+
+- Final demo owner, deployment location, repository/project locations, and support boundary are recorded.
+- Current repositories and Git/GitLab projects remain explicitly temporary until product-project convergence.
+- Interfaces between A&P/VPE, ATG, shared environment, evidence, and release are versioned or explicitly tracked as open.
+
+### FDI-2 - Deploy ATG through the final GitOps path
+
+Issue type: Story
+
+Summary: Deploy ATG service and execution integration to the final demo configuration
+
+Acceptance criteria:
+
+- Service, model endpoint profile, execution provider, evidence path, credentials, RBAC, and network policies are GitOps-managed.
+- Secrets are not committed to source.
+- Deployment, rollback, cleanup, and restart behavior are demonstrated.
+
+### FDI-3 - Compose the VPE-to-ATG evidence flow
+
+Issue type: Story
+
+Summary: Compose the A&P/VPE request, ATG lifecycle, and final-demo evidence path
+
+Acceptance criteria:
+
+- A&P-selected VPE Java 21/Quarkus request reaches ATG through the approved contract.
+- Human review/sign-off, base/candidate execution, limitations, and evidence references are visible through final-demo interfaces.
+- Existing compatibility outputs are retained only where required by the final configuration.
+
+### FDI-4 - Rehearse final demo operations
+
+Issue type: Task
+
+Summary: Rehearse final demo installation, operation, rollback, and recovery
+
+Acceptance criteria:
+
+- Clean-environment installation and upgrade are verified.
+- Positive, blocked, inconclusive, and failure-register paths are demonstrated.
+- Rollback, cleanup, retention, recovery, runbook, and operator ownership are documented.
 
 These items should not duplicate ATG implementation Stories or shared Demo Environment/Release tasks; they coordinate and verify the final composition.
 

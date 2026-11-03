@@ -11,7 +11,7 @@ Status: Draft for review. Do not publish without owner approval.
 | Summary | AI Test Generation MVP |
 | Labels | `lightwell` |
 | Parent | None |
-| Dependencies | `FLPATH-4997` Demo Environment; `FLPATH-4998` Assessment & Prioritization Pipeline; `FLPATH-4999` Release; proposed Final Demo Integration Epic (TBD) |
+| Dependencies | `FLPATH-4997` Demo Environment; `FLPATH-4998` Assessment & Prioritization Pipeline; `FLPATH-4999` Release; proposed Final Demo Integration Epic |
 
 ## Goal
 
@@ -43,7 +43,7 @@ Out of scope:
 - TF-1 through TF-5: target fixture, repository profile, and native framework Stories.
 - TG-1 through TG-7: pipeline, execution, evaluation, and evidence Stories.
 - TG-S1 through TG-S3: implementation, execution-provider, and evidence/signing Spikes.
-- Shared development-environment and release work is proposed as additions to `FLPATH-4997` and `FLPATH-4999`, not duplicate ATG implementation Stories. Final-demo composition is tracked by the proposed Final Demo Integration Epic (TBD).
+- Shared development-environment and release work is proposed as additions to `FLPATH-4997` and `FLPATH-4999`, not duplicate ATG implementation Stories. Final-demo composition is tracked by the proposed Final Demo Integration Epic.
 
 ## Dependency and Blocker Summary
 

@@ -154,7 +154,7 @@ Acceptance criteria:
 
 Issue type: Task
 
-Summary: Determine whether the SSC demo supports a safe strict differential test
+Summary: Determine whether the selected Java 21/Quarkus target supports a safe strict differential test
 
 Description:
 
@@ -359,13 +359,15 @@ Summary: Evaluate the AI Test Generation implementation harness
 
 Description:
 
-Run one vertical slice using an explicit state machine, deterministic fake model, and current approved endpoint. Evaluate direct SDKs, Pydantic AI, LangGraph, and reuse/fork/reproduction of `ai-test-harness` only against concrete lifecycle and quality needs.
+Run one vertical slice using an explicit state machine, deterministic fake model, and current approved endpoint. Evaluate the current SSC Aider/Claude Code task as the compatibility baseline; direct provider SDKs, Pydantic AI, LangGraph, and reuse/fork/reproduction of `ai-test-harness`; and `fullsend-ai/test-creator` plus internal test-plan-generator components for bounded Analyze/Plan capabilities. Consider VVAH/context-graph and external evaluation harnesses only for clearly bounded evidence or evaluation use cases.
 
 Acceptance criteria:
 
 - Recommends a stack per layer and reusable components.
 - Records licensing, ownership, maintenance, security, and portability findings.
 - Defines reconsideration triggers and does not change domain contracts to fit a framework.
+- Compares candidates by lifecycle coverage, structured outputs, checkpoint behavior, tool authorization, failure-register support, differential/evidence support, local component testing, and Lightwell integration fit.
+- Records what is reused, forked, reproduced, or retained as reference-only; no candidate becomes an adopted dependency by implication.
 
 ### TG-S2 - Determine execution-provider responsibility split
 

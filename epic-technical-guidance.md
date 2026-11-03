@@ -2012,6 +2012,7 @@ One Java/Maven/JUnit target repository with an immutable base/candidate pair, on
 **Accepted spikes**
 
 - TG-S1 — Implementation-harness vertical slice: run the research-spike shape below with an explicit state machine, a deterministic fake model, and the current demo endpoint; compare LangGraph, Pydantic AI, and `ai-test-harness` reuse only where the baseline exposes concrete need. Recommends a stack per layer, components to reuse, and reconsideration triggers.
+- TG-S1 must also evaluate the current SSC Aider/Claude Code task as the compatibility baseline, `fullsend-ai/test-creator` and the internal test-plan-generator as Analyze/Plan references, and VVAH/context-graph or external evaluation harnesses only where a bounded evidence or evaluation capability is demonstrated. No candidate is an adopted dependency until licensing, ownership, maintenance, security, local-testability, and Lightwell fit are verified.
 - TG-S2 — Execution-provider responsibility split: Tekton-owned versus service-owned workers, and callback, cancellation, retention, and cleanup ownership. Coordinate with A&P AP-S2 (FLPATH-5018) rather than duplicating it.
 - TG-S3 — Evidence, signing, and attestation path: envelope and predicate, signer and workload identity, configured store, and verifier API for the demo. A spike-owned verifier is acceptable until the final SSC consumer is selected.
 
