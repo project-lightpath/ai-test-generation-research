@@ -14,7 +14,7 @@
 
 ## Usage
 
-Run after `oc_login_auto` has established the cluster context:
+Run after cluster login:
 
 ```bash
 bash cluster/ssc-demo-cluster.sh --preflight
